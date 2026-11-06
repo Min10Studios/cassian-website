@@ -83,13 +83,20 @@
           draft with your text in its URL. GitHub then receives that text; you decide whether to submit.</p>
         <p>Leave out credentials, private contact details and private recordings.</p></section>
       <section><h2>Cookies and browser storage</h2>
-        <p>Our website code sets no cookies and uses no local or session storage, service worker,
-          analytics or tracking pixels. Hosting and authentication infrastructure operate under
-          their providers’ policies.</p></section>
+        <p>Our website code sets no cookies and loads no analytics or tracking pixels. The
+          <a href="/learn/">Learn room</a> saves learning preferences and manually marked lesson progress
+          in this browser using local storage. These records stay on this device and are not sent
+          to us or synced with Cassian or other devices. If browser storage is unavailable, the
+          tools use temporary in-memory state.</p>
+        <p>Saved Learn records remain until you clear this site's browser data. Clearing that data
+          removes the saved preferences and practice marks. The site does not use a service worker.
+          Hosting and authentication infrastructure operate under their providers’ policies.</p></section>
       <section><h2>Downloads and the clipboard</h2>
         <p>Installer downloads and source files come from GitHub Releases. Repository, license
           and issue links use GitHub’s services and policies. “Copy SHA-256” writes only the
-          displayed digest to your clipboard when you press it.</p></section>
+          displayed digest to your clipboard when you press it. Learn’s “Copy recipe” button writes
+          only the selected recipe settings when pressed; the learning module does not read your
+          existing clipboard.</p></section>
       <section id="zerotrace"><h2>ZeroTrace PDF and your documents</h2>
         <p><a href="/ZeroTrace/">ZeroTrace PDF</a> reads files you select into browser memory and processes them locally with JavaScript. Its processing code does not upload selected PDF bytes, filenames, or metadata reports to our servers. The page does not save PDF contents in cookies, local storage, or a server database.</p>
         <p>Before reports can display sensitive metadata from the original file. Files and reports remain available in the open tab until you clear them or close it. Clearing the queue releases the application's references; it is not secure erasure of device memory. Downloaded PDFs and audit files remain wherever you save them and are subject to your browser, device, backup, and synchronization settings.</p>

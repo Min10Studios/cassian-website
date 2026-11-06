@@ -1,0 +1,2 @@
+# Keep the verified module payload byte-identical on every checkout. Crazaloth.
+app/** -text

@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "file": "LICENSE.txt",
+      "bytes": 35184,
+      "sha256": "e0eedba615d5cd1b986afb6c5b3a4b1ae33713e7e9dc74d19daec5e3221f9d2e"
+    },
+    {
+      "file": "NOTICES.txt",
+      "bytes": 2369,
+      "sha256": "a8147eef75ff8008e567adb01192284b795de47cebc3c22765cbb8e40ab8f9ae"
+    },
+    {
+      "file": "cassian-learn.css",
+      "bytes": 29067,
+      "sha256": "f3f17e08ec7ce9fde7d6d4aacf900f033829739d031025cd082d0b3d80e969c2"
+    },
+    {
+      "file": "cassian-learn.js",
+      "bytes": 665925,
+      "sha256": "ff77cb7b1c465c664f68a1da95281f7c6eeb8a9fe7e0d59e10d035d722e541f7"
+    },
+    {
+      "file": "learn-source.zip",
+      "bytes": 378506,
+      "sha256": "f539a1771d0a5decc9ef90f1b36125e06a06a42987ded54715f71a9f5423af87"
+    }
+  ]
+}
