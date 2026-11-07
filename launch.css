@@ -61,3 +61,23 @@
 
 /* Final release links */
 .release-facts dd{min-width:0;max-width:66%;overflow-wrap:anywhere;word-break:break-word}.release-facts dd code{font-size:10px}.launch-split:not(:has(figure)){display:block}.source-credits li{margin-block:18px}.source-credits li code{overflow-wrap:anywhere;word-break:break-word}
+
+/* Cassian 1.1.0 release content */
+.release-110-heads,.pedal-details.release-110-captures{grid-template-columns:repeat(4,minmax(0,1fr))}
+.release-110-settings ul{margin:0;padding-inline-start:16px}
+.release-110-notes{padding-inline-start:20px;line-height:1.8;margin:0 0 24px}
+.release-110-issue{display:grid;gap:8px;max-width:790px;padding:16px 20px;border-left:3px solid var(--amber);background:var(--surface)}
+.release-110-issue strong{color:var(--white)}
+.pedal-details.release-110-captures{gap:16px;margin-bottom:36px}
+.release-110-captures img{height:240px}
+.release-110-download{margin-bottom:24px}
+@media(max-width:760px){
+  .release-110-heads,.pedal-details.release-110-captures{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .release-110-heads .head-card:last-child{grid-column:auto;max-width:none;justify-self:stretch}
+  .release-110-captures figure{display:flex;padding:18px 10px}
+  .release-110-captures img{height:190px;margin-bottom:14px}
+  .release-110-captures figcaption{text-align:center}
+}
+@media(max-width:400px){
+  .release-110-captures img{height:156px}
+}
