@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "status": "staged",
+  "status": "published",
   "version": "1.2.0",
   "channel": "Release",
   "format": "Windows standalone",
@@ -24,9 +24,11 @@
   "signed": false,
   "knownIssue": "Adding Drive may cause feedback. If it happens, bypass Drive and lower your monitoring level.",
   "installationChecks": {
-    "cleanInstall": "NOT RUN",
-    "upgrade": "NOT RUN",
-    "oldProfileFilesRetained": "NOT RUN",
+    "cleanInstall": "PASS",
+    "upgrade": "PASS",
+    "upgradeFrom": "1.1.0",
+    "oldProfileFilesRetained": "PASS",
+    "bundledWebView2InstallationWithoutExistingRuntime": "NOT RUN",
     "setupSha256": "ca12b881f6b87992bfc7539802bec745ede67c062869a0bc658d80ff040979bf"
   },
   "upgradeNotice": "Cassian 1.2.0 uses the same install location and Windows profile as 1.1.0. Settings and library entries from the separate 1.0.0 Beta profile do not carry over automatically.",
