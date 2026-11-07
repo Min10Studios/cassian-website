@@ -63,21 +63,281 @@
 .release-facts dd{min-width:0;max-width:66%;overflow-wrap:anywhere;word-break:break-word}.release-facts dd code{font-size:10px}.launch-split:not(:has(figure)){display:block}.source-credits li{margin-block:18px}.source-credits li code{overflow-wrap:anywhere;word-break:break-word}
 
 /* Cassian 1.1.0 release content */
-.release-110-heads,.pedal-details.release-110-captures{grid-template-columns:repeat(4,minmax(0,1fr))}
 .release-110-settings ul{margin:0;padding-inline-start:16px}
 .release-110-notes{padding-inline-start:20px;line-height:1.8;margin:0 0 24px}
 .release-110-issue{display:grid;gap:8px;max-width:790px;padding:16px 20px;border-left:3px solid var(--amber);background:var(--surface)}
 .release-110-issue strong{color:var(--white)}
-.pedal-details.release-110-captures{gap:16px;margin-bottom:36px}
-.release-110-captures img{height:240px}
 .release-110-download{margin-bottom:24px}
-@media(max-width:760px){
-  .release-110-heads,.pedal-details.release-110-captures{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .release-110-heads .head-card:last-child{grid-column:auto;max-width:none;justify-self:stretch}
-  .release-110-captures figure{display:flex;padding:18px 10px}
-  .release-110-captures img{height:190px;margin-bottom:14px}
-  .release-110-captures figcaption{text-align:center}
+
+/* Crazaloth: released Cassian chassis and control layers, composed at their original anchors. */
+.release-110-heads {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-@media(max-width:400px){
-  .release-110-captures img{height:156px}
+.release-amp-face {
+  position: relative;
+  container-type: inline-size;
+}
+.launch-hero-art .release-amp-face {
+  margin: 44px 16px 26px;
+}
+.launch-hero-art .release-amp-face img {
+  padding: 0;
+}
+.release-amp-chassis {
+  width: 100%;
+}
+.release-amp-face .release-amp-badge {
+  position: absolute;
+  inset: 36.06% auto auto 35.98%;
+  width: 28.04%;
+  height: 14.42%;
+  object-fit: contain;
+}
+.release-amp-ferrum {
+  --plate-inset: 68% 7% 14%;
+  --plate-metal: #d8c7ae;
+  --plate-ink: #171514;
+  --master-angle: -9.15deg;
+}
+.release-amp-bastion {
+  --plate-inset: 63% 8% 17%;
+  --plate-metal: #d3cac0;
+  --master-angle: -75.15deg;
+  --dial-centre: conic-gradient(from 30deg, #727b80, #eceeed 45deg, #838b8f 95deg, #c8ced0 180deg, #687177 270deg, #a9b0b3);
+  --dial-ink: #171c20;
+}
+.release-amp-rubicon {
+  --plate-inset: 62% 8% 19%;
+  --plate-metal: #dbc295;
+  --master-angle: -16.5deg;
+}
+.release-amp-viridian {
+  --plate-inset: 62% 8% 17%;
+  --plate-metal: #dbd4c1;
+  --master-angle: -52.8deg;
+}
+.release-amp-ferrum, .release-amp-viridian {
+  --dial-rim: repeating-conic-gradient(#a7a18d 0deg 5deg, #e2dac2 5deg 10deg);
+  --dial-border: #817964;
+  --dial-centre: radial-gradient(ellipse at 30% 20%, #fff9e8, #d6ccb1 60%, #938b72);
+  --dial-ink: #292c28;
+}
+.release-amp-plate {
+  position: absolute;
+  inset: var(--plate-inset);
+  display: grid;
+  grid-template-columns: 12cqw minmax(0, 1fr) 5cqw;
+  gap: .35cqw;
+  align-items: center;
+  color: var(--plate-ink, #000);
+  font: 600 clamp(5px, 1.25cqw, 9px)/1.05 var(--body);
+  text-align: center;
+}
+.release-amp-setting {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-items: center;
+  height: 100%;
+  padding-block: .5cqw;
+  font-weight: 500;
+}
+.release-amp-setting > span, .release-amp-value {
+  background: var(--plate-metal);
+}
+.release-amp-switches {
+  display: flex;
+  gap: .2cqw;
+}
+.release-amp-switches > span {
+  display: grid;
+  place-content: center;
+  flex: 1;
+  min-width: 0;
+  min-height: max(12px, 2.9cqw);
+  border: 1px solid #768083;
+  border-radius: 2px;
+  background: #20272b;
+  color: #f2ead8;
+  font-size: clamp(4px, 1.1cqw, 9px);
+}
+.release-amp-switches > .is-selected {
+  border-color: #a1854e;
+  background: #e7c587;
+  color: #201a12;
+}
+.release-amp-knobs {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: center;
+}
+.release-amp-knob {
+  display: grid;
+  justify-items: center;
+  gap: .2cqw;
+  white-space: nowrap;
+}
+.release-amp-knob.is-minimum {
+  --dial-angle: -135deg;
+}
+.release-amp-knob.is-master {
+  --dial-angle: var(--master-angle);
+}
+.release-amp-value {
+  font-weight: 400;
+}
+.release-dial {
+  position: relative;
+  display: block;
+  width: 5cqw;
+  aspect-ratio: 1;
+  border: 1px solid var(--dial-border, #161718);
+  border-radius: 50%;
+  background: var(--dial-rim, repeating-conic-gradient(#111315 0deg 5deg, #404347 5deg 10deg));
+  box-shadow: 0 .35cqw .5cqw #0009, inset 0 1px 1px #fff6;
+}
+.release-dial::before, .release-dial::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+}
+.release-dial::before {
+  inset: 10%;
+  background: var(--dial-centre, radial-gradient(ellipse at 32% 20%, #65686a, #25282c 50%, #080a0c));
+  box-shadow: inset 0 1px 2px #fff4, 0 1px 2px #0009;
+}
+.release-dial::after {
+  inset: 13%;
+  background: linear-gradient(var(--dial-ink, #eee9d8), var(--dial-ink, #eee9d8)) top center / max(1px, 6%) 30% no-repeat;
+  transform: rotate(var(--dial-angle, 0deg));
+}
+.release-amp-gate {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: .4cqw;
+  height: 100%;
+}
+.release-gate-toggle {
+  position: relative;
+  width: max(5px, 1.4cqw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(#767a7c, #f3f3ea, #62696a, #d4d9d6, #767a7c);
+  box-shadow: 0 1px 2px #000b;
+}
+.release-gate-toggle::after {
+  content: "";
+  position: absolute;
+  inset: 40% 32% -25%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #72777a, #f0f3ee 55%, #73787a);
+  box-shadow: 0 1px 1px #000b;
+}
+.release-amp-power {
+  position: absolute;
+  right: 0;
+  bottom: .2cqw;
+  width: max(2px, .45cqw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, #e8a267, #a33926 55%, #512219);
+}
+@container (max-width: 440px) {
+  .release-amp-value { display: none; }
+}
+
+/* Chassis calipers are the released 1024 by 1536 artwork coordinates. */
+.pedal-details.release-110-captures {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 36px;
+}
+.release-110-captures figure {
+  display: flex;
+  gap: 18px;
+  padding: 22px 12px;
+}
+.release-110-captures figcaption {
+  text-align: center;
+  font-size: 13px;
+}
+.release-110-captures strong {
+  font-size: 18px;
+}
+.release-pedal-face {
+  position: relative;
+  width: min(100%, 234px);
+  container-type: inline-size;
+  --dial-rim: repeating-conic-gradient(#121516 0deg 9deg, #2c3031 9deg 18deg);
+  --dial-centre: conic-gradient(from 30deg, #17191c, #44474b 45deg, #0c0e10 90deg, #35383a 180deg, #0c0e10 270deg, #17191c);
+  --dial-ink: #fff3cc;
+}
+.release-pedal-face svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.release-pedal-warm-drive {
+  --input-x: calc(301 / 1024 * 100%);
+  --input-y: calc(309 / 1536 * 100%);
+  --output-x: calc(719 / 1024 * 100%);
+  --output-y: calc(305 / 1536 * 100%);
+}
+.release-pedal-tight-drive {
+  --input-x: calc(303 / 1024 * 100%);
+  --input-y: calc(307 / 1536 * 100%);
+  --output-x: calc(723 / 1024 * 100%);
+  --output-y: calc(307 / 1536 * 100%);
+}
+.release-pedal-classic-distortion {
+  --input-x: calc(303 / 1024 * 100%);
+  --input-y: calc(316 / 1536 * 100%);
+  --output-x: calc(718 / 1024 * 100%);
+  --output-y: calc(316 / 1536 * 100%);
+  --pedal-ink: #172c42;
+  --pedal-label-shadow: #fff5;
+}
+.release-pedal-heavy-distortion {
+  --input-x: calc(299 / 1024 * 100%);
+  --input-y: calc(307 / 1536 * 100%);
+  --output-x: calc(724 / 1024 * 100%);
+  --output-y: calc(309 / 1536 * 100%);
+}
+.release-pedal-control {
+  position: absolute;
+  width: 20%;
+  transform: translate(-50%, -50%);
+}
+.release-pedal-input {
+  left: var(--input-x);
+  top: var(--input-y);
+}
+.release-pedal-output {
+  left: var(--output-x);
+  top: var(--output-y);
+}
+.release-pedal-control .release-dial {
+  width: 100%;
+  border-width: 2px;
+}
+.release-pedal-label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 3px);
+  transform: translateX(-50%);
+  color: var(--pedal-ink, #fff1d5);
+  font: 700 15px/1.1 var(--body);
+  text-shadow: 0 1px 2px var(--pedal-label-shadow, #0009);
+}
+@media (max-width: 1090px) {
+  .pedal-details.release-110-captures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .release-110-heads { grid-template-columns: minmax(0, 1fr); }
+  .release-110-heads .head-card:last-child { grid-column: auto; max-width: none; justify-self: stretch; }
+  .launch-hero-art .release-amp-face { margin: 30px 10px 20px; }
+}
+@media (max-width: 600px) {
+  .pedal-details.release-110-captures { grid-template-columns: minmax(0, 1fr); }
 }
