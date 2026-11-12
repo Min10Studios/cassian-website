@@ -12211,6 +12211,14 @@ function getChordVoicing(shapeId, root = 4) {
     tuning: "standard"
   };
 }
+function getChordNoteName(chord, soundingPitch) {
+  var _a, _b;
+  const rootName = ((_b = (_a = chord.name) == null ? void 0 : _a.match(/^[A-G][#b]*/)) == null ? void 0 : _b[0]) ?? noteName(chord.baseRoot);
+  const interval = pitchClass$1(soundingPitch - chord.baseRoot);
+  const degrees = [0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6];
+  const degree = interval === 3 && chord.intervals.includes(4) ? 1 : degrees[interval];
+  return spellFromRoot(rootName, soundingPitch, degree);
+}
 const open = (id, name, root, intervals, frets) => ({
   id,
   name,
@@ -12393,8 +12401,13 @@ const OPEN_STRING_X = 54;
 function pitchClass(note) {
   return (Math.trunc(Number(note) || 0) % 12 + 12) % 12;
 }
-function midiNoteName(midi) {
-  return NOTE_NAMES[pitchClass(midi)] + (Math.floor(midi / 12) - 1);
+function midiNoteName(midi, writtenName) {
+  const name = typeof writtenName === "string" ? writtenName : NOTE_NAMES[pitchClass(midi)];
+  const sharps = name.split("#").length - 1;
+  const flats = name.split("b").length - 1;
+  const writtenPitch = NOTE_NAMES.indexOf(name[0]) + sharps - flats;
+  const octave = Math.floor((midi - writtenPitch) / 12) - 1;
+  return name + octave;
 }
 function getLearnTuning(id = "standard") {
   return LEARN_TUNINGS.find((item) => item.id === id) || LEARN_TUNINGS[0];
@@ -12845,8 +12858,16 @@ function Fretboard({
   const currentInterval = getRelativeInterval(currentMidi, tonic);
   const fretIntervalLabel = (interval) => interval === 0 ? "R" : intervalName(interval, selectedScale.id);
   const shapeVisible = canShowChordShape(chord, selectedTuning.id, tonic);
-  const intervals = new Set(
-    ((chord == null ? void 0 : chord.intervals) || selectedScale.intervals).map(pitchClass)
+  const referenceIntervals = (chord == null ? void 0 : chord.intervals) || selectedScale.intervals;
+  const intervals = new Set(referenceIntervals.map(pitchClass));
+  const referenceNames = chord ? referenceIntervals.map(
+    (interval) => getChordNoteName(chord, tonic + interval)
+  ) : getScaleNoteNames(selectedScale.id, tonic);
+  const namesByPitch = new Map(
+    referenceIntervals.map((interval, index) => [
+      pitchClass(tonic + interval),
+      referenceNames[index]
+    ])
   );
   const positionOptions = getPositionOptions(
     selectedTuning.id,
@@ -13037,7 +13058,7 @@ function Fretboard({
     chord && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "learn-fretboard__chord-note", role: "status", children: [
       chord.name,
       " · root ",
-      NOTE_NAMES[tonic],
+      namesByPitch.get(tonic),
       ":",
       " ",
       shapeVisible ? "outlined notes show this voicing in " + selectedTuning.name + "." : Fretboard_chord_tones_recalculated_for_this_tuning + getLearnTuning(chord.tuning).name + " in " + NOTE_NAMES[pitchClass(chord.baseRoot)] + "."
@@ -13166,7 +13187,7 @@ function Fretboard({
                     const isShape = shapeVisible && chord.frets[stringIndex] === fret;
                     const isSelected = current.stringIndex === stringIndex && current.fret === fret;
                     const x = getFretX(fret, leftHanded);
-                    const label2 = "String " + (stringCount - stringIndex) + ", fret " + fret + ", " + midiNoteName(midi) + ", MIDI " + midi + ", interval " + fretIntervalLabel(relative) + (isRoot ? ", root" : isTone ? ", " + (chord ? "chord tone" : "scale tone") : "");
+                    const label2 = "String " + (stringCount - stringIndex) + ", fret " + fret + ", " + midiNoteName(midi, namesByPitch.get(pitchClass(midi))) + ", MIDI " + midi + ", interval " + fretIntervalLabel(relative) + (isRoot ? ", root" : isTone ? ", " + (chord ? "chord tone" : "scale tone") : "");
                     return /* @__PURE__ */ jsxRuntimeExports.jsxs(
                       "g",
                       {
@@ -13223,7 +13244,7 @@ function Fretboard({
                               textAnchor: "middle",
                               y: "4",
                               "aria-hidden": "true",
-                              children: display === "notes" ? NOTE_NAMES[pitchClass(midi)] : fretIntervalLabel(relative)
+                              children: display === "notes" ? namesByPitch.get(pitchClass(midi)) ?? NOTE_NAMES[pitchClass(midi)] : fretIntervalLabel(relative)
                             }
                           )
                         ]
@@ -13248,7 +13269,10 @@ function Fretboard({
           "aria-atomic": "true",
           "aria-label": "Selected fret",
           children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: midiNoteName(currentMidi) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: midiNoteName(
+              currentMidi,
+              namesByPitch.get(pitchClass(currentMidi))
+            ) }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
               "String ",
               currentString,
@@ -13269,8 +13293,12 @@ function Fretboard({
         }
       ),
       onNoteActivate && /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { type: "button", onClick: () => onNoteActivate(currentMidi), children: [
-        "Hear ",
-        midiNoteName(currentMidi)
+        "Hear",
+        " ",
+        midiNoteName(
+          currentMidi,
+          namesByPitch.get(pitchClass(currentMidi))
+        )
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: Fretboard_Click_a_fret_to_inspect_Arrow })
     ] })
@@ -13397,7 +13425,7 @@ function ChordDiagram({ chord, leftHanded = false }) {
 }
 function ChordCard({ chord, onSelect, disabled, leftHanded }) {
   const notes = chord.frets.map(
-    (fret, i) => fret === null ? "×" : noteName(STANDARD_OPEN_PITCHES[i] + fret)
+    (fret, i) => fret === null ? "×" : getChordNoteName(chord, STANDARD_OPEN_PITCHES[i] + fret)
   );
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("article", { className: "learn-chord-card", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "learn-chord-card-heading", children: [
@@ -14061,7 +14089,7 @@ function LearnContent({
   );
   const [saving, setSaving] = reactExports.useState(true), [chord, setChord] = reactExports.useState(null), [position, setPosition] = reactExports.useState("all"), [feedback, setFeedback] = reactExports.useState(""), [playing, setPlaying] = reactExports.useState(false), [busy, setBusy] = reactExports.useState(false);
   const [tempoDraft, setTempoDraft] = reactExports.useState(String(prefs.tempo));
-  const audio = reactExports.useRef(null), active = reactExports.useRef(true), eventHandler = reactExports.useRef(onEvent);
+  const audio = reactExports.useRef(null), active = reactExports.useRef(true), eventHandler = reactExports.useRef(onEvent), panelRef = reactExports.useRef(null), referenceNavigation = reactExports.useRef(false);
   eventHandler.current = onEvent;
   const emit = (type, detail) => {
     var _a;
@@ -14108,6 +14136,13 @@ function LearnContent({
     var _a;
     (_a = audio.current) == null ? void 0 : _a.setTempo(prefs.tempo);
   }, [prefs.tempo]);
+  reactExports.useEffect(() => {
+    var _a, _b, _c;
+    if (!referenceNavigation.current) return;
+    referenceNavigation.current = false;
+    (_a = panelRef.current) == null ? void 0 : _a.focus({ preventScroll: true });
+    (_c = (_b = panelRef.current) == null ? void 0 : _b.scrollIntoView) == null ? void 0 : _c.call(_b, { block: "start", behavior: "auto" });
+  }, [prefs.section, chord]);
   const pathway = PATHWAYS.find((row) => row.id === prefs.pathway) ?? PATHWAYS[0];
   const leftHanded = prefs.handedness === "left";
   const play = async (notes) => {
@@ -14154,6 +14189,7 @@ function LearnContent({
     emit("lesson-change", { pathway: id });
   };
   const showChord = (selected) => {
+    referenceNavigation.current = true;
     setChord(selected);
     setPosition("all");
     update({ section: "neck" });
@@ -14280,7 +14316,9 @@ function LearnContent({
     /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "section",
       {
+        ref: panelRef,
         role: "tabpanel",
+        tabIndex: -1,
         id: "learn-panel-" + prefs.section,
         "aria-labelledby": "learn-tab-" + prefs.section,
         children: [
@@ -14296,6 +14334,7 @@ function LearnContent({
                 tuning: prefs.tuning,
                 onChordSelect: showChord,
                 onScaleSelect: (scale) => {
+                  referenceNavigation.current = true;
                   update({ scale, section: "neck" });
                   setChord(null);
                   setPosition("all");
@@ -14326,7 +14365,17 @@ function LearnContent({
                 " · ",
                 leftHanded ? "Left-handed" : "Right-handed"
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => setChord(null), children: "Return to scale" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => {
+                    referenceNavigation.current = true;
+                    setChord(null);
+                  },
+                  children: "Return to scale"
+                }
+              ),
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "button",
                 {
