@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "status": "prepared; publication held pending exact installer QA and Hub review",
+  "status": "release-ready",
   "version": "1.2.1",
   "channel": "Release",
   "format": "Windows standalone",
@@ -32,12 +32,17 @@
   "restoredPresets": 8,
   "knownIssue": "Adding Drive may cause feedback. If it happens, bypass Drive and lower your monitoring level.",
   "installationChecks": {
-    "cleanInstall": "PENDING",
-    "upgrade": "PENDING",
+    "cleanInstall": "PASS_FOCUSED_INSTALL_CONSEQUENCES",
+    "upgrade": "PASS_FOCUSED_INSTALL_CONSEQUENCES",
     "upgradeFrom": "1.2.0",
-    "founderTest": "PENDING",
+    "scope": "Focused installer payload/version, application startup and normal exit, saved rig/profile retention. Stored audioSetup comparison used an empty fixture.",
+    "founderTest": "Prior accepted runtime evidence reused; no new final-package audition",
+    "freshPhysicalAudioBox": "NOT RUN",
     "bundledWebView2InstallationWithoutExistingRuntime": "NOT RUN",
-    "setupSha256": "41059f1cb11f0468250d1d2143ca3d6afd6d72597bfd5d29491305592d9648d3"
+    "setupSha256": "41059f1cb11f0468250d1d2143ca3d6afd6d72597bfd5d29491305592d9648d3",
+    "aggregateReceiptSha256": "7394e52f757c2733617c0ae932e6e09d71c8f42c69591fa22288954054ba2de9",
+    "cleanResultSha256": "93b08068331791f394b92ec427b53909e15a4ee85cddac0b8701aa04457cb6b7",
+    "upgradeResultSha256": "4d4bddb49b6956b66bc7a980f20d9b2c1ea49be979cc6cc2f8bb493d82e9a4d4"
   },
   "artifacts": [
     {
