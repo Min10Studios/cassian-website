@@ -16,15 +16,16 @@
   <meta property="og:title" content="Downloads &amp; verification — Min10 Studios">
   <meta property="og:description" content="Official Cassian downloads, SHA-256 verification and support from Min10 Studios.">
   <meta property="og:url" content="https://min10studios.com/security.html">
-  <meta property="og:image" content="https://min10studios.com/assets/v8-amp-viper.5ce28f14a90f.webp">
-  <meta property="og:image:alt" content="Cassian Viper amplifier by Min10 Studios">
+  <meta property="og:image" content="https://min10studios.com/assets/cassian-110-ferrum-ivory.1c7e4f901b37.webp">
+  <meta property="og:image:alt" content="Cassian Ferrum amplifier by Min10 Studios">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Downloads &amp; verification — Min10 Studios">
   <meta name="twitter:description" content="Official Cassian downloads, SHA-256 verification and support from Min10 Studios.">
-  <meta name="twitter:image" content="https://min10studios.com/assets/v8-amp-viper.5ce28f14a90f.webp">
-  <meta name="twitter:image:alt" content="Cassian Viper amplifier by Min10 Studios">
+  <meta name="twitter:image" content="https://min10studios.com/assets/cassian-110-ferrum-ivory.1c7e4f901b37.webp">
+  <meta name="twitter:image:alt" content="Cassian Ferrum amplifier by Min10 Studios">
   <link rel="icon" href="/assets/cassian-logo-192.png">
   <link rel="stylesheet" href="/styles.css?build=87f30fe3">
+  <link rel="stylesheet" href="/release-documents.css">
 </head>
 <body class="document-page">
 <a class="skip-link" href="#main">Skip to content</a>
@@ -34,67 +35,75 @@
     <span>CASSIAN<small>MIN10 STUDIOS</small></span>
   </a>
   <nav aria-label="Main navigation">
-    <a href="/#collection">Amplifiers</a><a href="/#band">The band</a>
+    <a href="/#amps">Amplifiers</a><a href="/#band">The band</a>
     <a class="nav-download" href="/#download">Get Cassian <span aria-hidden="true">↓</span></a>
   </nav>
 </header>
 <main id="main" class="document-main section-shell">
   <header class="document-intro">
     <p class="eyebrow">DOWNLOADS &amp; VERIFICATION</p>
-    <h1>Know your download.</h1>
-    <p>Where Cassian’s files come from, and how to check them.</p>
+    <h1>Know what you download.</h1>
+    <p>Official Cassian files and a manual SHA-256 check.</p>
   </header>
   <div class="document-layout">
     <aside class="document-summary hardware-panel" aria-label="Release details">
-      <p class="eyebrow">PUBLIC BETA / WINDOWS x64</p>
+      <p class="eyebrow">CASSIAN / WINDOWS x64</p>
       <dl class="spec-table">
-        <div><dt>Release tag</dt><dd>v8.0.0</dd></div>
-        <div><dt>Formats</dt><dd>Standalone + VST3</dd></div>
+        <div><dt>Release tag</dt><dd>v1.2.1</dd></div>
+        <div><dt>Format</dt><dd>Windows standalone</dd></div>
         <div><dt>File verification</dt><dd>SHA-256</dd></div>
-        <div><dt>Publisher signing</dt><dd>Pending</dd></div>
+        <div><dt>Publisher signing</dt><dd>Unsigned</dd></div>
       </dl>
       <a class="text-link" href="/#download">Go to downloads <span aria-hidden="true">↗</span></a>
     </aside>
     <div class="document-copy">
       <section><h2>The official installer</h2>
-        <p>Downloads come from the public
-          <a href="https://github.com/Min10Studios/cassian-website/releases" rel="noopener noreferrer">Cassian release repository</a>
-          on GitHub. The home page checks the exact v8.0.0 tag and its file metadata before enabling
-          either download button. That tag may be marked as a public beta; drafts and other versions are rejected.</p>
-        <p>If the release has not been published or its files cannot be verified, the buttons stay
-          disabled. Once the verified files are published, opening the page or choosing “Check again”
-          enables the download without a website update.</p></section>
+        <p>Use the versioned files on the
+          <a href="https://github.com/Min10Studios/cassian-website/releases/tag/v1.2.1">Cassian 1.2.1 release</a>
+          in Min10 Studios’ GitHub repository. This is the Windows standalone application.</p>
+        <p>The website uses fixed, versioned download links. It does not automatically check
+          GitHub or verify a file on your computer. Check the filename and complete SHA-256
+          before running an installer.</p></section>
       <section><h2>Check the downloaded file</h2>
-        <p>The optional SHA-256 check confirms that the file on your computer matches the
-          published installer. Open PowerShell in your Downloads folder and run:</p>
-        <code class="document-command">Get-FileHash .\Cassian-Setup.exe -Algorithm SHA256</code>
-        <p>Compare the complete result with the installer SHA-256 shown in the download section.
-          Every character should match. Use SHA-256 for integrity checks; the MD5 manifest
-          is included only for legacy comparisons.</p></section>
+        <p>Open PowerShell in the folder containing your download and run:</p>
+        <code class="document-command">Get-FileHash .\Cassian-1.2.1-Setup.exe -Algorithm SHA256</code>
+        <p>The expected file is <strong>355,558,141 bytes</strong>.
+          Compare every character of the SHA-256 result with:</p>
+        <p><code>41059f1cb11f0468250d1d2143ca3d6afd6d72597bfd5d29491305592d9648d3</code></p>
+        <p>The matching <a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SHA256SUMS.txt">SHA256SUMS.txt</a>
+          also lists the release files. A different hash means the bytes do not match this
+          release; download the versioned file again before running it.</p></section>
       <section><h2>Windows publisher signing</h2>
-        <p>Publisher signing is still pending. A matching checksum identifies the file’s bytes;
-          it does not replace a publisher signature or establish that software is safe.
-          Read the matching release report for its actual acceptance results and any unfinished checks.</p></section>
-      <section><h2>What the website verifies</h2>
-        <p>The download check validates the repository and release URL, version agreement,
-          uploaded file state, file names, size limits and GitHub-reported SHA-256 digests.
-          Missing, duplicate or unexpected metadata leaves the download disabled.</p>
-        <p>The release must include the installer, matching portable and source ZIPs,
-          SHA256SUMS.txt, MD5SUMS.txt, RELEASE-READINESS.json and Cassian-Build.json.
-          The separate legacy stable-release validator continues to reject all prereleases.</p></section>
+        <p>The 1.2.1 installer is unsigned, so Windows may show a publisher warning.
+          A matching checksum identifies bytes; it does not replace a publisher signature
+          or establish that software is safe.</p></section>
+      <section><h2>Matching source and notices</h2>
+        <p>Use the explicit application-source asset and the separate model-source companions.
+          GitHub’s automatic source ZIP contains the website, not the Cassian application.
+          <a href="/model-credits.html">Credits and source</a> explains the companion files.</p>
+        <ul><li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-Setup.exe">Cassian-1.2.1-Setup.exe</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-Source.zip">Cassian-1.2.1-Source.zip</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.0.0-Model-Source.zip">Cassian-1.0.0-Model-Source.zip</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-MIT-Model-Source.zip">Cassian-1.2.1-MIT-Model-Source.zip</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/NOTICES.txt">NOTICES.txt</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/RELEASE-NOTES.txt">RELEASE-NOTES.txt</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SOURCE-RECIPE.json">SOURCE-RECIPE.json</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Release.json">Release.json</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SHA256SUMS.txt">SHA256SUMS.txt</a></li></ul></section>
       <section><h2>The website and app are separate</h2>
         <p>The website does not install or run Cassian, control the app, read your sessions,
           or provide an automatic updater. You choose to download the installer and run it in Windows.</p>
-        <p>The site uses local scripts and artwork, a restrictive content policy, bounded release
-          responses and fixed external destinations. It has no visitor upload service, account
-          database, payment form or embedded credentials.</p></section>
+        <p>The Learn room uses local scripts for its browser exercises. It does not load the
+          desktop sound bank or connect to an installed Cassian app.</p></section>
       <section><h2>Hosting limits</h2>
         <p>GitHub Pages does not apply the custom HTTP headers used by the local preview.
           Framing and device-permission headers are not claimed as deployed protections.
           Account-level release immutability and publisher access controls require separate verification.</p></section>
       <section><h2>Report a concern</h2>
-        <p>Use the <a href="https://github.com/Min10Studios/cassian-website/issues" rel="noopener noreferrer">issue tracker</a>
-          for non-sensitive reports. For private support, email <a href="mailto:support@min10studios.com">support@min10studios.com</a>. Keep passwords and credentials out of reports.</p></section>
+        <p>Use the <a href="https://github.com/Min10Studios/cassian-website/issues">issue tracker</a>
+          for non-sensitive reports. For private support, email
+          <a href="mailto:support@min10studios.com">support@min10studios.com</a>.
+          Keep passwords and credentials out of reports.</p></section>
     </div>
   </div>
 </main>

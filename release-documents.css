@@ -1,0 +1,11 @@
+/* Original project provenance: Crazaloth. Keep full hashes readable on narrow screens. */
+.document-layout > * {
+  min-width: 0;
+}
+.document-copy {
+  overflow-wrap: anywhere;
+}
+.document-copy code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
