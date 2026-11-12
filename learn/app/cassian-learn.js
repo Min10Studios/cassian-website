@@ -13834,11 +13834,55 @@ const doctors = [
     exercise: ToneAcademy_Mute_the_strings_and_raise_Threshold
   }
 ];
+const minimumVersion = "1.2.1";
+const studies = [{ "id": "study.factory.capture-ferrum-ev5150-clean", "presetId": "factory.capture-ferrum-ev5150-clean", "name": "Ferrum Clean · Clean Glass", "searchTerm": "Clean Glass" }, { "id": "study.factory.ready-ferrum-clean-ambient", "presetId": "factory.ready-ferrum-clean-ambient", "name": "Ferrum Clean Ambient", "searchTerm": "Clean Ambient" }, { "id": "study.factory.capture-ferrum-ev5150", "presetId": "factory.capture-ferrum-ev5150", "name": "Ferrum · Tight Rhythm", "searchTerm": "Tight Rhythm" }, { "id": "study.factory.ready-ferrum-lead", "presetId": "factory.ready-ferrum-lead", "name": "Ferrum Lead", "searchTerm": "Lead" }, { "id": "study.factory.ready-bastion-vintage-crunch", "presetId": "factory.ready-bastion-vintage-crunch", "name": "Bastion Vintage Crunch", "searchTerm": "Vintage Crunch" }, { "id": "study.factory.ready-focused-rhythm", "presetId": "factory.ready-focused-rhythm", "name": "Bastion Focused Rhythm", "searchTerm": "Focused Rhythm" }, { "id": "study.factory.ready-wide-lead", "presetId": "factory.ready-wide-lead", "name": "Bastion Wide Lead", "searchTerm": "Wide Lead" }, { "id": "study.factory.capture-british-edge", "presetId": "factory.capture-british-edge", "name": "Rubicon · Chime", "searchTerm": "Chime" }, { "id": "study.factory.ready-edge-breakup", "presetId": "factory.ready-edge-breakup", "name": "Rubicon Edge Breakup", "searchTerm": "Edge Breakup" }, { "id": "study.factory.ready-open-echo", "presetId": "factory.ready-open-echo", "name": "Rubicon Open Echo", "searchTerm": "Open Echo" }, { "id": "study.factory.capture-british-clean", "presetId": "factory.capture-british-clean", "name": "Viridian · Glass Clean", "searchTerm": "Glass Clean" }, { "id": "study.factory.ready-viridian-funk", "presetId": "factory.ready-viridian-funk", "name": "Viridian Funk Clean", "searchTerm": "Funk Clean" }, { "id": "study.factory.ready-viridian-chorus", "presetId": "factory.ready-viridian-chorus", "name": "Viridian Chorus · Chorus Clean", "searchTerm": "Chorus Clean" }, { "id": "study.factory.lum-herbert-chime", "presetId": "factory.lum-herbert-chime", "name": "Tube chime", "searchTerm": "Tube chime" }, { "id": "study.factory.lum-mini-glass", "presetId": "factory.lum-mini-glass", "name": "Mini glass", "searchTerm": "Mini glass" }, { "id": "study.factory.lum-chime-space", "presetId": "factory.lum-chime-space", "name": "Chime space", "searchTerm": "Chime space" }, { "id": "study.factory.lum-british-edge", "presetId": "factory.lum-british-edge", "name": "British edge", "searchTerm": "British edge" }, { "id": "study.factory.lum-british-storm", "presetId": "factory.lum-british-storm", "name": "British storm", "searchTerm": "British storm" }, { "id": "study.factory.lum-modern-iron", "presetId": "factory.lum-modern-iron", "name": "Modern iron", "searchTerm": "Modern iron" }, { "id": "study.factory.lum-liquid-fire", "presetId": "factory.lum-liquid-fire", "name": "Liquid fire", "searchTerm": "Liquid fire" }, { "id": "study.factory.lum-iron-lead", "presetId": "factory.lum-iron-lead", "name": "Iron lead", "searchTerm": "Iron lead" }];
+const factoryReferences = {
+  minimumVersion,
+  studies
+};
+const captureStudyDoctors = [
+  {
+    id: "gain",
+    title: "Input & listening level",
+    summary: "Hear level and tone as separate observations.",
+    explanation: "Input changes the signal entering the loaded capture. The visible output and Master controls set level later in the signal path. Match the listening level when comparing two settings.",
+    exercise: "Play the same phrase at two Input settings. Adjust the visible output control to a similar listening level, then describe the change in attack and sustain."
+  },
+  {
+    id: "presence",
+    title: "EQ & routing",
+    summary: "Locate the EQ before changing it.",
+    explanation: "The preset saves its PRE and POST pedal routing. PRE EQ shapes the signal entering the amp; POST EQ shapes the finished sound. Legacy EQ rows retain their coupled shaping. These studies keep the saved processing models and control values.",
+    exercise: "Find an EQ already present in the loaded preset. Read its lane and visible band labels, then compare a small change with the original setting."
+  },
+  {
+    id: "depth",
+    title: "Capture pedal controls",
+    summary: "Study the controls on the actual pedal face.",
+    explanation: "Warm Drive, Tight Drive, Classic Distortion and Heavy Distortion capture pedals provide Input, Output and Bypass. The model supplies the captured source tone. Other pedal types have their own visible controls.",
+    exercise: "On a capture pedal, compare Bypass with the enabled sound. Match Output before judging the change; then make a small Input change and listen again."
+  },
+  {
+    id: "gate",
+    title: "Save & compare",
+    summary: "Keep the phrase and monitoring level consistent.",
+    explanation: "Applying a factory study loads its complete preset. The study preserves its factory control values. Save your own rig before developing a variation, and compare one audible change at a time.",
+    exercise: "Record one observation about the original sound, make one visible control change, and describe the difference before changing another control."
+  }
+];
 const label = (id) => id.replace(/^(AMP_|REVERB_|DELAY_|COMP_|DIST_|CHORUS_)/, "").replaceAll("_", " ").toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
 function ToneGuide({ pathway }) {
   const recipe = recipes.find((row) => row.id === pathway) ?? recipes[0];
+  const [studyId, setStudyId] = reactExports.useState("");
+  const study = factoryReferences.studies.find((row) => row.id === studyId);
   const [feedback, setFeedback] = reactExports.useState("");
-  const text = [
+  const text = study ? [
+    study.name,
+    `Factory preset study · reference: Cassian ${factoryReferences.minimumVersion}`,
+    `Search the sound chooser for: ${study.searchTerm}`,
+    "Load the complete preset, then repeat one short phrase at a matched listening level.",
+    "Study one visible control at a time and keep the preset's saved routing as your starting point."
+  ].join("\n") : [
     recipe.name,
     recipe.amp,
     recipe.description,
@@ -13856,31 +13900,64 @@ function ToneGuide({ pathway }) {
     try {
       if (!((_a = navigator.clipboard) == null ? void 0 : _a.writeText)) throw Error();
       await navigator.clipboard.writeText(text);
-      setFeedback("Recipe copied.");
+      setFeedback(study ? "Study copied." : "Recipe copied.");
     } catch {
-      setFeedback("Clipboard unavailable. Select and copy the recipe below.");
+      setFeedback(
+        study ? "Clipboard unavailable. Select and copy the study below." : "Clipboard unavailable. Select and copy the recipe below."
+      );
     }
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "learn-tone-guide", "aria-label": "Tone crafting guide", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { children: [
+      "Tone study",
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "select",
+        {
+          "aria-label": "Tone study",
+          value: (study == null ? void 0 : study.id) ?? "",
+          onChange: (event) => {
+            setStudyId(event.target.value);
+            setFeedback("");
+          },
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: "", children: [
+              "Original genre recipe · ",
+              recipe.genre
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "optgroup",
+              {
+                label: `Factory presets · Cassian ${factoryReferences.minimumVersion}`,
+                children: factoryReferences.studies.map((row) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: row.id, children: row.name }, row.id))
+              }
+            )
+          ]
+        }
+      )
+    ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "learn-card", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "learn-kicker", children: [
-        "Tone recipe · ",
-        recipe.genre
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: recipe.name }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: recipe.description }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "learn-signal-chain", "aria-label": "Typical guitar signal chain", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Guitar → Wah / drive → Amp → Cabinet → Modulation → Delay / reverb" }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: recipe.lesson }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "learn-muted", children: recipe.limitations }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "learn-kicker", children: study ? `Factory study · Cassian ${factoryReferences.minimumVersion}` : `Tone recipe · ${recipe.genre}` }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: (study == null ? void 0 : study.name) ?? recipe.name }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: study ? `In Cassian ${factoryReferences.minimumVersion}, search the sound chooser for “${study.searchTerm}” and load the complete preset.` : recipe.description }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "div",
+        {
+          className: "learn-signal-chain",
+          "aria-label": "Typical guitar signal chain",
+          children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: study ? "Complete preset → saved amp, cabinet and pedal routing" : "Guitar → Wah / drive → Amp → Cabinet → Modulation → Delay / reverb" })
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: study ? "Repeat one short phrase. Describe the attack, sustain and space, then compare one visible control at a matched listening level." : recipe.lesson }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "learn-muted", children: study ? "The source capture defines its recorded tone. Use the controls displayed for the selected preset." : recipe.limitations }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: "Recipe settings" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: study ? "Study reference" : "Recipe settings" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { tabIndex: "0", children: text })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: copy, children: "Copy recipe" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: copy, children: study ? "Copy study" : "Copy recipe" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { role: "status", children: feedback }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "learn-muted", children: "Dial these settings in Cassian. Reference audio here uses a simple synth." })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "learn-muted", children: study ? "Choose this preset in the desktop sound chooser and use your instrument for the listening exercise." : "Load the matching genre recipe in desktop Learn before exploring its controls. Reference audio here uses a simple synth." })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "learn-doctors", children: doctors.map((doctor) => /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "learn-card", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "learn-doctors", children: (study ? captureStudyDoctors : doctors).map((doctor) => /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "learn-card", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: doctor.title }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: doctor.summary }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: doctor.explanation }),
