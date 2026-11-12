@@ -1,79 +1,107 @@
 {
   "schema": 1,
-  "status": "published",
-  "version": "1.2.0",
+  "status": "prepared; publication held pending exact installer QA and Hub review",
+  "version": "1.2.1",
   "channel": "Release",
   "format": "Windows standalone",
-  "sourceCommit": "044dee980cce0ce092dbadb6a79fc728de8c4a30",
-  "sourceTree": "f7bacab3a81a12ba693679c857c77be0048948fa",
-  "tag": "v1.2.0",
-  "releaseUrl": "https://github.com/Min10Studios/cassian-website/releases/tag/v1.2.0",
-  "downloadUrl": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.0/Cassian-1.2.0-Setup.exe",
+  "sourceBaseCommit": "bab76f11cb3a9de1e953bf7633c3c748f3e17e68",
+  "sourceRecipeUrl": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SOURCE-RECIPE.json",
+  "sourcePatches": [
+    "d592dedd2a6c33a2c888f126529c2d683cfd56992268385c485192ccb64f72c9",
+    "5588d5b9315de92ebd54cbed2dad90dd6f15b8be1db925cf0bec4f3e33d21c3b",
+    "2766f05332aceda170a13ebf8928600d6ad678031f44a24c307c691affecbab1"
+  ],
+  "sourceNote": "Use the matching application source plus both model-source companions. Build overlays are documented in SOURCE-RECIPE.json.",
+  "tag": "v1.2.1",
+  "releaseUrl": "https://github.com/Min10Studios/cassian-website/releases/tag/v1.2.1",
+  "downloadUrl": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-Setup.exe",
   "distribution": {
     "free": true,
     "drmFree": true,
     "subscriptionRequired": false
   },
+  "signed": false,
   "heads": [
     "Ferrum",
     "Bastion",
     "Rubicon",
     "Viridian"
   ],
-  "sourceNote": "Use the matching 1.2.0 application source and the separate source archive for the ordinary models and cabinet IRs.",
-  "signed": false,
+  "visiblePresetActions": 21,
+  "curatedPresets": 13,
+  "restoredPresets": 8,
   "knownIssue": "Adding Drive may cause feedback. If it happens, bypass Drive and lower your monitoring level.",
   "installationChecks": {
-    "cleanInstall": "PASS",
-    "upgrade": "PASS",
-    "upgradeFrom": "1.1.0",
-    "oldProfileFilesRetained": "PASS",
+    "cleanInstall": "PENDING",
+    "upgrade": "PENDING",
+    "upgradeFrom": "1.2.0",
+    "founderTest": "PENDING",
     "bundledWebView2InstallationWithoutExistingRuntime": "NOT RUN",
-    "setupSha256": "ca12b881f6b87992bfc7539802bec745ede67c062869a0bc658d80ff040979bf"
+    "setupSha256": "41059f1cb11f0468250d1d2143ca3d6afd6d72597bfd5d29491305592d9648d3"
   },
-  "upgradeNotice": "Cassian 1.2.0 uses the same install location and Windows profile as 1.1.0. Settings and library entries from the separate 1.0.0 Beta profile do not carry over automatically.",
   "artifacts": [
     {
       "role": "installer",
-      "name": "Cassian-1.2.0-Setup.exe",
-      "bytes": 354675556,
-      "sha256": "ca12b881f6b87992bfc7539802bec745ede67c062869a0bc658d80ff040979bf",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.0/Cassian-1.2.0-Setup.exe"
+      "name": "Cassian-1.2.1-Setup.exe",
+      "bytes": 355558141,
+      "sha256": "41059f1cb11f0468250d1d2143ca3d6afd6d72597bfd5d29491305592d9648d3",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-Setup.exe"
     },
     {
       "role": "application-source",
-      "name": "Cassian-1.2.0-Source.zip",
-      "bytes": 361910481,
-      "sha256": "82ebd2b330f73db88258f4cab5cf127102e645f23d943385a21a654d1e4a3f7d",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.0/Cassian-1.2.0-Source.zip"
+      "name": "Cassian-1.2.1-Source.zip",
+      "bytes": 195572844,
+      "sha256": "97ff22f152028b7ab8186c2c4b349fc696764bd2d85a551e7b99cc258c35cf44",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-Source.zip"
     },
     {
       "role": "model-source",
       "name": "Cassian-1.0.0-Model-Source.zip",
       "bytes": 38923822,
       "sha256": "b5d29d1c4b24536137e9c50dfe0dcd6d0a853b9b5e287624e4ea2c18c59aea49",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.0/Cassian-1.0.0-Model-Source.zip"
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.0.0-Model-Source.zip"
+    },
+    {
+      "role": "restored-model-source",
+      "name": "Cassian-1.2.1-MIT-Model-Source.zip",
+      "bytes": 811064,
+      "sha256": "3064ef38c8128ef7209765bccd0b9c676aa3205fda8f3c6cc46af59612c696a9",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-MIT-Model-Source.zip"
     },
     {
       "role": "notices",
       "name": "NOTICES.txt",
-      "bytes": 2122,
-      "sha256": "39d7c529d54c2d378eed39b01baf9ce8d9bfc6fe67a6b6b7093dea48d2e44f10",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.0/NOTICES.txt"
+      "bytes": 3977,
+      "sha256": "fcb6e97bd980f20268a5c9e13058295167dd605a4a6f96f7bb2a9866f3391aad",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/NOTICES.txt"
     },
     {
       "role": "release-notes",
       "name": "RELEASE-NOTES.txt",
-      "bytes": 848,
-      "sha256": "0bc65cb65d72db3a4dfda1f1083118e69b411881e981e487713c385f5807e294",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.0/RELEASE-NOTES.txt"
+      "bytes": 630,
+      "sha256": "c60e796f971c0d7521a237420d178601fda1ea63eb62ae6bd4d62de71426306f",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/RELEASE-NOTES.txt"
+    },
+    {
+      "role": "source-recipe",
+      "name": "SOURCE-RECIPE.json",
+      "bytes": 6102,
+      "sha256": "7b10dc3d1d372e8c30eb8fd739aea480710d1351a02d6140eb49a1b8d99f4e33",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SOURCE-RECIPE.json"
+    },
+    {
+      "role": "release-metadata",
+      "name": "Release.json",
+      "bytes": 2256,
+      "sha256": "16a1d5a8b0d7887d7853a792119f44392131934fcd4eaf1f9a803d4f49388741",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Release.json"
     },
     {
       "role": "checksums",
       "name": "SHA256SUMS.txt",
-      "bytes": 440,
-      "sha256": "bc65110a351caaf9f89a4fb9293dd6ae1440d8744b2ec8de945bda2131bd8020",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.0/SHA256SUMS.txt"
+      "bytes": 705,
+      "sha256": "8bd725d6a4abae773fc5ec2c36ae01ead4b65931cb3055078fb70df2624888aa",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SHA256SUMS.txt"
     }
   ]
 }
