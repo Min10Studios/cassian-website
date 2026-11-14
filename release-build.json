@@ -1,20 +1,18 @@
 {
   "schema": 1,
   "status": "release-ready",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "channel": "Release",
   "format": "Windows standalone",
   "sourceBaseCommit": "bab76f11cb3a9de1e953bf7633c3c748f3e17e68",
-  "sourceRecipeUrl": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SOURCE-RECIPE.json",
+  "sourceRecipeUrl": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/SOURCE-RECIPE.json",
   "sourcePatches": [
-    "d592dedd2a6c33a2c888f126529c2d683cfd56992268385c485192ccb64f72c9",
-    "5588d5b9315de92ebd54cbed2dad90dd6f15b8be1db925cf0bec4f3e33d21c3b",
-    "2766f05332aceda170a13ebf8928600d6ad678031f44a24c307c691affecbab1"
+    "9e34f7e48cd2260f998168a7f0578bf1e58a84467a27fbe33b4b0710e8d5f142"
   ],
-  "sourceNote": "Use the matching application source plus both model-source companions. Build overlays are documented in SOURCE-RECIPE.json.",
-  "tag": "v1.2.1",
-  "releaseUrl": "https://github.com/Min10Studios/cassian-website/releases/tag/v1.2.1",
-  "downloadUrl": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-Setup.exe",
+  "sourceNote": "Use the matching application source plus both model-source companions. The source recipe records the shipping native source, updated UI and 1.2.2 metadata overlay; no combined Git commit is claimed.",
+  "tag": "v1.2.2",
+  "releaseUrl": "https://github.com/Min10Studios/cassian-website/releases/tag/v1.2.2",
+  "downloadUrl": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/Cassian-1.2.2-Setup.exe",
   "distribution": {
     "free": true,
     "drmFree": true,
@@ -32,81 +30,117 @@
   "restoredPresets": 8,
   "knownIssue": "Adding Drive may cause feedback. If it happens, bypass Drive and lower your monitoring level.",
   "installationChecks": {
-    "cleanInstall": "PASS_FOCUSED_INSTALL_CONSEQUENCES",
-    "upgrade": "PASS_FOCUSED_INSTALL_CONSEQUENCES",
-    "upgradeFrom": "1.2.0",
-    "scope": "Focused installer payload/version, application startup and normal exit, saved rig/profile retention. Stored audioSetup comparison used an empty fixture.",
-    "founderTest": "Prior accepted runtime evidence reused; no new final-package audition",
+    "cleanInstall": "NOT RUN",
+    "upgrade": "NOT RUN",
+    "standardPathInstaller": "NOT RUN",
+    "scope": "The exact extracted 1.2.2 runtime was checked separately; this does not establish standard-path installer execution or clean-install/upgrade acceptance.",
     "freshPhysicalAudioBox": "NOT RUN",
     "bundledWebView2InstallationWithoutExistingRuntime": "NOT RUN",
-    "setupSha256": "41059f1cb11f0468250d1d2143ca3d6afd6d72597bfd5d29491305592d9648d3",
-    "aggregateReceiptSha256": "7394e52f757c2733617c0ae932e6e09d71c8f42c69591fa22288954054ba2de9",
-    "cleanResultSha256": "93b08068331791f394b92ec427b53909e15a4ee85cddac0b8701aa04457cb6b7",
-    "upgradeResultSha256": "4d4bddb49b6956b66bc7a980f20d9b2c1ea49be979cc6cc2f8bb493d82e9a4d4"
+    "setupSha256": "caa1d89dbcef6dced4dcb458a780da14aa58279ceede892f9f30cff33c33dac1"
   },
   "artifacts": [
     {
       "role": "installer",
-      "name": "Cassian-1.2.1-Setup.exe",
-      "bytes": 355558141,
-      "sha256": "41059f1cb11f0468250d1d2143ca3d6afd6d72597bfd5d29491305592d9648d3",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-Setup.exe"
+      "name": "Cassian-1.2.2-Setup.exe",
+      "bytes": 355644812,
+      "sha256": "caa1d89dbcef6dced4dcb458a780da14aa58279ceede892f9f30cff33c33dac1",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/Cassian-1.2.2-Setup.exe"
     },
     {
       "role": "application-source",
-      "name": "Cassian-1.2.1-Source.zip",
-      "bytes": 195572844,
-      "sha256": "97ff22f152028b7ab8186c2c4b349fc696764bd2d85a551e7b99cc258c35cf44",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-Source.zip"
+      "name": "Cassian-1.2.2-Source.zip",
+      "bytes": 195981907,
+      "sha256": "4035bc693994536d11d5eb173d3ad4bb5b1b6a135288a2b31a05877ae954e96b",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/Cassian-1.2.2-Source.zip"
     },
     {
       "role": "model-source",
       "name": "Cassian-1.0.0-Model-Source.zip",
       "bytes": 38923822,
       "sha256": "b5d29d1c4b24536137e9c50dfe0dcd6d0a853b9b5e287624e4ea2c18c59aea49",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.0.0-Model-Source.zip"
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/Cassian-1.0.0-Model-Source.zip"
     },
     {
       "role": "restored-model-source",
-      "name": "Cassian-1.2.1-MIT-Model-Source.zip",
-      "bytes": 811064,
-      "sha256": "3064ef38c8128ef7209765bccd0b9c676aa3205fda8f3c6cc46af59612c696a9",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-MIT-Model-Source.zip"
+      "name": "Cassian-1.2.2-MIT-Model-Source.zip",
+      "bytes": 811132,
+      "sha256": "7a5c45228663925627d21377cf64b1fed0d8974d67d5ee6d85337e8363278894",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/Cassian-1.2.2-MIT-Model-Source.zip"
     },
     {
       "role": "notices",
       "name": "NOTICES.txt",
       "bytes": 3977,
       "sha256": "fcb6e97bd980f20268a5c9e13058295167dd605a4a6f96f7bb2a9866f3391aad",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/NOTICES.txt"
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/NOTICES.txt"
     },
     {
       "role": "release-notes",
       "name": "RELEASE-NOTES.txt",
-      "bytes": 630,
-      "sha256": "c60e796f971c0d7521a237420d178601fda1ea63eb62ae6bd4d62de71426306f",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/RELEASE-NOTES.txt"
+      "bytes": 421,
+      "sha256": "4c7253218b70eaca63e2f8fcf6d871ddce8b94358584c4f6b4c695da0f790fdb",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/RELEASE-NOTES.txt"
     },
     {
       "role": "source-recipe",
       "name": "SOURCE-RECIPE.json",
-      "bytes": 6102,
-      "sha256": "7b10dc3d1d372e8c30eb8fd739aea480710d1351a02d6140eb49a1b8d99f4e33",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SOURCE-RECIPE.json"
+      "bytes": 6634,
+      "sha256": "0a521d1c906577ae6d117a6027eab1ee157085a910adc814d7dc04f43124b6c0",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/SOURCE-RECIPE.json"
     },
     {
       "role": "release-metadata",
       "name": "Release.json",
-      "bytes": 2256,
-      "sha256": "16a1d5a8b0d7887d7853a792119f44392131934fcd4eaf1f9a803d4f49388741",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Release.json"
+      "bytes": 2708,
+      "sha256": "531ab30792e79513074bacd3bd9fb5f615521780b00c35feb1b7ee397ba738c2",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/Release.json"
     },
     {
       "role": "checksums",
       "name": "SHA256SUMS.txt",
       "bytes": 705,
-      "sha256": "8bd725d6a4abae773fc5ec2c36ae01ead4b65931cb3055078fb70df2624888aa",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SHA256SUMS.txt"
+      "sha256": "2fae3d236c8ee0d7c022b4c53328a3c687dd6f69579ebabcabdb16017931d8f8",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/SHA256SUMS.txt"
     }
-  ]
+  ],
+  "sourceUiCommit": "4532ee049937c35b133959129f1b1b88b3fc7a59",
+  "sourceUiTree": "d0a8baa285bf156d630440716495e4e96da1cee8",
+  "sourceComposition": "Shipping native source plus the completed 4532 UI and exact four-file 1.2.2 metadata overlay; four existing nonruntime artwork metadata sanitizations retained. New internal review/layout documents are excluded. Production code, build tooling, catalog and artwork bytes are retained.",
+  "resources": {
+    "html": {
+      "bytes": 1485677,
+      "sha256": "873ae6e4d6a80d7eb7e92347b42501122ff54decd10f0f59c50d4c5b857ea5db"
+    },
+    "catalog": {
+      "bytes": 490515,
+      "sha256": "08eacc18e5fff3350ea78643b3506620989b32350808efa673aa60c32f6fb893"
+    }
+  },
+  "normalExeSha256": "cd5442fd67c047a85bc57e118c78ea76eed305c7680d666507a44d2c776c12b3",
+  "publication": "APPROVED_FOR_EXACT_1.2.2_RELEASE",
+  "runtimeChecks": {
+    "status": "PASS_SCOPED_EXACT_EXTRACTED_RUNTIME_FOUNDER_STATE_RESTORED",
+    "scope": "Exact installer-extracted 1.2.2 runtime: Ferrum/Rig ready, scoped EQ/pedal controls, normal exit and verified restoration of the original founder state. Compact layout was observed at one size; this does not establish standard-path installation or audio acceptance.",
+    "normalExeSha256": "cd5442fd67c047a85bc57e118c78ea76eed305c7680d666507a44d2c776c12b3",
+    "finalReceipt": {
+      "bytes": 8752,
+      "sha256": "67e2dae04b3f9c095be2f299fb0f90cb42adaa44b4b985e79a81d5c6e2e844c6"
+    },
+    "normalExit": {
+      "status": "PASS",
+      "exitCode": 0
+    },
+    "founderStateRestoration": "PASS",
+    "qaReview": {
+      "status": "PASS_SCOPED_ARTIFACT_SOURCE_AND_04_EXTRACTED_RUNTIME_REVIEW; SUCCESSFUL STANDARD INSTALL/UPGRADE NOT RUN",
+      "scope": "Exact delivery artifact, source, resource and version mappings, plus review of the scoped extracted-runtime and founder-state restoration evidence. QA performed no installer/app execution or new runtime regression.",
+      "receipt": {
+        "bytes": 22374,
+        "sha256": "1cd5760f861c7084b46c9bf718c9d24dfc6b1073e83283e1e2a83090d7f9ab44"
+      },
+      "runtimeReceiptSha256": "67e2dae04b3f9c095be2f299fb0f90cb42adaa44b4b985e79a81d5c6e2e844c6",
+      "installerOrAppExecutionByReviewer": "NOT RUN"
+    },
+    "founderFinalPackageApproval": "APPROVED_FOR_EXACT_RELEASE_PUBLICATION"
+  }
 }

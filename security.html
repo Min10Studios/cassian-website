@@ -49,7 +49,7 @@
     <aside class="document-summary hardware-panel" aria-label="Release details">
       <p class="eyebrow">CASSIAN / WINDOWS x64</p>
       <dl class="spec-table">
-        <div><dt>Release tag</dt><dd>v1.2.1</dd></div>
+        <div><dt>Release tag</dt><dd>v1.2.2</dd></div>
         <div><dt>Format</dt><dd>Windows standalone</dd></div>
         <div><dt>File verification</dt><dd>SHA-256</dd></div>
         <div><dt>Publisher signing</dt><dd>Unsigned</dd></div>
@@ -59,37 +59,39 @@
     <div class="document-copy">
       <section><h2>The official installer</h2>
         <p>Use the versioned files on the
-          <a href="https://github.com/Min10Studios/cassian-website/releases/tag/v1.2.1">Cassian 1.2.1 release</a>
+          <a href="https://github.com/Min10Studios/cassian-website/releases/tag/v1.2.2">Cassian 1.2.2 release</a>
           in Min10 Studios’ GitHub repository. This is the Windows standalone application.</p>
         <p>The website uses fixed, versioned download links. It does not automatically check
           GitHub or verify a file on your computer. Check the filename and complete SHA-256
           before running an installer.</p></section>
       <section><h2>Check the downloaded file</h2>
         <p>Open PowerShell in the folder containing your download and run:</p>
-        <code class="document-command">Get-FileHash .\Cassian-1.2.1-Setup.exe -Algorithm SHA256</code>
-        <p>The expected file is <strong>355,558,141 bytes</strong>.
+        <code class="document-command">Get-FileHash .\Cassian-1.2.2-Setup.exe -Algorithm SHA256</code>
+        <p>The expected file is <strong>355,644,812 bytes</strong>.
           Compare every character of the SHA-256 result with:</p>
-        <p><code>41059f1cb11f0468250d1d2143ca3d6afd6d72597bfd5d29491305592d9648d3</code></p>
-        <p>The matching <a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SHA256SUMS.txt">SHA256SUMS.txt</a>
+        <p><code>caa1d89dbcef6dced4dcb458a780da14aa58279ceede892f9f30cff33c33dac1</code></p>
+        <p>The matching <a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/SHA256SUMS.txt">SHA256SUMS.txt</a>
           also lists the release files. A different hash means the bytes do not match this
           release; download the versioned file again before running it.</p></section>
       <section><h2>Windows publisher signing</h2>
-        <p>The 1.2.1 installer is unsigned, so Windows may show a publisher warning.
+        <p>The 1.2.2 installer is unsigned, so Windows may show a publisher warning.
           A matching checksum identifies bytes; it does not replace a publisher signature
           or establish that software is safe.</p></section>
+      <section><h2>What was checked</h2>
+        <p>The exact app extracted from this installer received a focused startup and EQ/pedal control check. Standard-path installation, clean-install and upgrade execution, fresh physical audio and WebView2 prerequisite installation without an existing runtime have not been tested for this package.</p></section>
       <section><h2>Matching source and notices</h2>
         <p>Use the explicit application-source asset and the separate model-source companions.
           GitHub’s automatic source ZIP contains the website, not the Cassian application.
           <a href="/model-credits.html">Credits and source</a> explains the companion files.</p>
-        <ul><li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-Setup.exe">Cassian-1.2.1-Setup.exe</a></li>
-<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-Source.zip">Cassian-1.2.1-Source.zip</a></li>
-<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.0.0-Model-Source.zip">Cassian-1.0.0-Model-Source.zip</a></li>
-<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Cassian-1.2.1-MIT-Model-Source.zip">Cassian-1.2.1-MIT-Model-Source.zip</a></li>
-<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/NOTICES.txt">NOTICES.txt</a></li>
-<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/RELEASE-NOTES.txt">RELEASE-NOTES.txt</a></li>
-<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SOURCE-RECIPE.json">SOURCE-RECIPE.json</a></li>
-<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/Release.json">Release.json</a></li>
-<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.1/SHA256SUMS.txt">SHA256SUMS.txt</a></li></ul></section>
+        <ul><li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/Cassian-1.2.2-Setup.exe">Cassian-1.2.2-Setup.exe</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/Cassian-1.2.2-Source.zip">Cassian-1.2.2-Source.zip</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/Cassian-1.0.0-Model-Source.zip">Cassian-1.0.0-Model-Source.zip</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/Cassian-1.2.2-MIT-Model-Source.zip">Cassian-1.2.2-MIT-Model-Source.zip</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/NOTICES.txt">NOTICES.txt</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/RELEASE-NOTES.txt">RELEASE-NOTES.txt</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/SOURCE-RECIPE.json">SOURCE-RECIPE.json</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/Release.json">Release.json</a></li>
+<li><a href="https://github.com/Min10Studios/cassian-website/releases/download/v1.2.2/SHA256SUMS.txt">SHA256SUMS.txt</a></li></ul></section>
       <section><h2>The website and app are separate</h2>
         <p>The website does not install or run Cassian, control the app, read your sessions,
           or provide an automatic updater. You choose to download the installer and run it in Windows.</p>
