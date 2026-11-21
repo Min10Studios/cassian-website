@@ -341,3 +341,6 @@
 @media (max-width: 600px) {
   .pedal-details.release-110-captures { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Cassian 1.3.0 campaign; Crazaloth provenance preserved. */
+.release-130-banner{margin:24px 0 32px;border:1px solid var(--line);background:#0e1715}.release-130-banner img{display:block;width:100%;height:auto}
