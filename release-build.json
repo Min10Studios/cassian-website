@@ -1,13 +1,14 @@
 {
   "schema": 1,
   "status": "release-ready",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "channel": "Release",
   "format": "Windows standalone",
-  "sourceCommit": "ffeeaa96f0e5d5d0bb06b1948521e7583d0c624b",
-  "tag": "v1.3.0",
-  "releaseUrl": "https://github.com/Min10Studios/cassian-website/releases/tag/v1.3.0",
-  "downloadUrl": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.0/Cassian-1.3.0-Setup.exe",
+  "date": "2026-11-22",
+  "sourceCommit": "005068f86b24cb9572447c2895318ecbdfd01c98",
+  "tag": "v1.3.1",
+  "releaseUrl": "https://github.com/Min10Studios/cassian-website/releases/tag/v1.3.1",
+  "downloadUrl": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.1/Cassian-1.3.1-Setup.exe",
   "signed": false,
   "distribution": {
     "free": true,
@@ -16,100 +17,93 @@
     "subscriptionRequired": false
   },
   "heads": [
+    "Uriel",
     "Ferrum",
     "Bastion",
     "Rubicon",
     "Viridian"
   ],
-  "visiblePresetActions": 22,
-  "curatedPresets": 14,
+  "visiblePresetActions": 23,
+  "curatedPresets": 15,
   "restoredPresets": 8,
-  "knownIssue": "The earlier Drive-feedback report remains open. If it occurs, bypass Drive and lower the monitoring level.",
+  "knownIssue": "High-gain rigs may expose idle input noise. Founder reported idle crackle through an AudioBox; gain staging, gate and EQ refinements are planned next. The earlier Drive-feedback report remains open.",
   "runtimeChecks": {
-    "status": "PASS_SCOPED_EXACT_EXTRACTED_RUNTIME",
-    "startup": "Ferrum; Rig ready",
-    "visibleVersion": "1.3.0",
-    "captureQualityDefault": "Balanced",
-    "freshInterfaceSetup": "48 kHz / 256 samples",
-    "ampSwitch": "Ferrum to Bastion; Rig ready",
-    "bandStatePreserved": "Original bass, key E,120 BPM",
-    "soundSelector": "Four head families;14 curated presets including Sweep Lead;8 restored presets",
-    "newBandControls": "Feel, Intensity and Fill visible",
-    "audioAudition": "NOT RUN",
-    "standardPathInstallation": "NOT RUN",
+    "candidateWindowsChecks": "PASS: startup, Uriel selection, saved reopening, failure handling and normal exit at 48 kHz/256 samples",
+    "founderListening": "APPROVED on 2026-11-22; idle noise recorded separately",
+    "postAcceptanceChanges": "Release labels only; DSP and musical settings unchanged",
+    "installerPayloadEquality": {
+      "status": "PASS",
+      "files": 621
+    },
+    "sourceArchiveIntegrity": "PASS: CRC and every manifest entry",
+    "finalReleaseNativeLaunch": "NOT RUN after label-only rebuild",
+    "fullRegression": "NOT RUN",
     "cleanInstallUpgrade": "NOT RUN",
-    "absentRuntimeWebView2": "NOT RUN",
-    "scope": "Focused final-installer extracted-runtime checks with input monitoring muted. No full regression or new listening acceptance is claimed. Original owner settings restored."
-  },
-  "installationChecks": {
-    "standardPathInstaller": "NOT RUN",
-    "cleanInstall": "NOT RUN",
-    "upgrade": "NOT RUN",
-    "bundledWebView2InstallationWithoutExistingRuntime": "NOT RUN"
+    "absentWebView2Installation": "NOT RUN"
   },
   "artifacts": [
     {
       "role": "installer",
-      "name": "Cassian-1.3.0-Setup.exe",
-      "bytes": 355609257,
-      "sha256": "8f676ed99fae1742f03896b9c9b631e1b80277987ef9c4ea71fa4f6b3dceecee",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.0/Cassian-1.3.0-Setup.exe"
+      "name": "Cassian-1.3.1-Setup.exe",
+      "bytes": 359004392,
+      "sha256": "2b6cdff913fb24865dd491e3a64db57bffd2d69389c981effe51526808b74ab5",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.1/Cassian-1.3.1-Setup.exe"
     },
     {
       "role": "application-source",
-      "name": "Cassian-1.3.0-Source.zip",
-      "bytes": 201188719,
-      "sha256": "dc56d8824be0b71cd46b277a1471e23581d79144fa004bc9cac1b2682bf360e8",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.0/Cassian-1.3.0-Source.zip"
+      "name": "Cassian-1.3.1-Source.zip",
+      "bytes": 204748103,
+      "sha256": "2cecd16d7cfdac6b992472cc9058126c1baacb1001c003257041636795381ead",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.1/Cassian-1.3.1-Source.zip"
     },
     {
       "role": "model-source",
       "name": "Cassian-1.0.0-Model-Source.zip",
       "bytes": 38923822,
       "sha256": "b5d29d1c4b24536137e9c50dfe0dcd6d0a853b9b5e287624e4ea2c18c59aea49",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.0/Cassian-1.0.0-Model-Source.zip"
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.1/Cassian-1.0.0-Model-Source.zip"
     },
     {
       "role": "restored-model-source",
       "name": "Cassian-1.2.2-MIT-Model-Source.zip",
       "bytes": 811132,
       "sha256": "7a5c45228663925627d21377cf64b1fed0d8974d67d5ee6d85337e8363278894",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.0/Cassian-1.2.2-MIT-Model-Source.zip"
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.1/Cassian-1.2.2-MIT-Model-Source.zip"
     },
     {
       "role": "notices",
       "name": "NOTICES.txt",
-      "bytes": 3977,
-      "sha256": "fcb6e97bd980f20268a5c9e13058295167dd605a4a6f96f7bb2a9866f3391aad",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.0/NOTICES.txt"
+      "bytes": 4968,
+      "sha256": "efd291fade28e9edde600eb6e62c38177a7fddf4773cc9fb0f3591d76a8b93e2",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.1/NOTICES.txt"
     },
     {
       "role": "release-notes",
       "name": "RELEASE-NOTES.txt",
-      "bytes": 466,
-      "sha256": "0e31e7344cad084f07ada8c75ef52f527a2f84b14e13a97ce7bd0fd7e0fb33fb",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.0/RELEASE-NOTES.txt"
+      "bytes": 1566,
+      "sha256": "2720e2d096cf8be127857ef405c518289318a0535e53202558c3ce2bf8e90e48",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.1/RELEASE-NOTES.txt"
     },
     {
       "role": "source-recipe",
       "name": "SOURCE-RECIPE.json",
-      "bytes": 1284,
-      "sha256": "b8e46e567363b16872588c79130df7763c7e5b4a504589579f74cbdcbaa0747f",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.0/SOURCE-RECIPE.json"
+      "bytes": 769,
+      "sha256": "076c82b0e6cebbfdbfb5525a79024a04ed380b8831ae0f5d821dc1b8ff6f224d",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.1/SOURCE-RECIPE.json"
     },
     {
       "role": "release-metadata",
       "name": "Release.json",
-      "bytes": 3742,
-      "sha256": "00894a52c448d7f6281a1ca4139b95c7fe877eae829bdda289ef70d55dd151cb",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.0/Release.json"
+      "bytes": 3867,
+      "sha256": "9aa265ac5d88cd19efce2bd3bb968221a6a44d53525c2aeda89d534e5772ec06",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.1/Release.json"
     },
     {
       "role": "checksums",
       "name": "SHA256SUMS.txt",
       "bytes": 713,
-      "sha256": "60cc45795ba2d0c58b0775f13425766f60e490924ac3ccd8751b99bced946675",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.0/SHA256SUMS.txt"
+      "sha256": "6e9674064de7b0c2d55dee91dd967cdb1022a9eb5f876e383b9ce55e8a4f8b20",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.3.1/SHA256SUMS.txt"
     }
   ]
 }
