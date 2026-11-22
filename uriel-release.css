@@ -1,0 +1,20 @@
+/* Uriel — original Cassian artwork; Crazaloth provenance retained. */
+.uriel-product{position:relative;width:100%;aspect-ratio:1890/832;container-type:inline-size;isolation:isolate}
+.uriel-chassis{display:block;width:100%;height:auto}
+.uriel-seal{position:absolute;top:32.6%;left:46.95%;width:6.1%;aspect-ratio:1;object-fit:contain;mix-blend-mode:multiply;opacity:.12}
+.uriel-controls{position:absolute;left:8%;right:8%;top:65.2%;height:16%;display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) .55fr;gap:.5%;color:#241c0e;text-align:center;font:600 1.48cqw/1.2 Arial,sans-serif}
+.uriel-control{display:flex;align-items:center;flex-direction:column;gap:1cqw}
+.uriel-control img{width:5.1cqw;height:5.1cqw;object-fit:contain;transform:rotate(var(--angle));filter:drop-shadow(0 1px 1px #3a260650)}
+.uriel-gate{display:flex;flex-direction:column;align-items:center;padding-top:1.4cqw;gap:.4cqw;font-size:1.2cqw}
+.uriel-gate i{width:.65cqw;height:1.3cqw;border:1px solid #996d38;border-radius:50%;background:linear-gradient(90deg,#e8be75,#f2c981,#edc37a);box-shadow:0 -.1cqw .5cqw #caffff}
+.uriel-intro{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:center}
+.uriel-intro h3{font-size:clamp(28px,4vw,44px);margin:0 0 18px}.uriel-intro p{line-height:1.7}
+.head-gallery.release-110-heads{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:850px){.uriel-intro{grid-template-columns:1fr}.head-gallery.release-110-heads{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.head-gallery.release-110-heads{grid-template-columns:1fr}}
+
+.uriel-control:nth-child(1) img{transform:rotate(-90deg)}.uriel-control:nth-child(6) img{transform:rotate(-35deg)}.uriel-control:nth-child(7) img{transform:rotate(-25deg)}
+.uriel-product>.uriel-chassis{width:100%;height:auto;padding:0;margin:0}
+.uriel-product>.uriel-seal{width:6.1%;height:auto;padding:0;margin:0}
+.uriel-product .uriel-control img{width:5.1cqw;height:5.1cqw;padding:0;margin:0}
+.launch-hero-art>.uriel-product{margin:30px auto 12px;width:calc(100% - 24px)}

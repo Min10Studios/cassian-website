@@ -2,7 +2,7 @@
 
 Production website: https://min10studios.com/
 
-Current release: Cassian 1.3.0 for Windows.
+Current release: Cassian 1.3.1 for Windows.
 Free, offline and subscription-free. Unsigned x64 standalone installer.
 
 This update includes smoother amp voicing and picking response, Band feel and intensity,
@@ -21,3 +21,5 @@ Contact: contact@min10studios.com.
 Company: Min10Tech LLC. Brand: Min10 Studios. Original provenance: **Crazaloth**.
 Application and Learn source: AGPL-3.0-or-later.
 Equipment references do not imply affiliation or endorsement.
+
+1.3.1 introduces Uriel and seven Governor 4x12 SM57 positions. Five illustrated heads, 15 curated presets and eight restored choices. Idle noise through high-gain rigs is a recorded follow-up, not a fixed issue.
