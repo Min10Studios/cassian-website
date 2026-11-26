@@ -6,7 +6,7 @@ let instance;
 async function openLearningRoom() {
   if (!host || !feedback || instance) return;
   feedback.hidden = false;
-  feedback.textContent = 'Opening the learning roomâ€¦';
+  feedback.textContent = 'Opening the learning room…';
   try {
     const { mountCassianLearn } = await import('./app/cassian-learn.js?v=1.4.0');
     instance = await mountCassianLearn(host, {
