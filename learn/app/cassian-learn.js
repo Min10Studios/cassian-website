@@ -11895,6 +11895,3582 @@ function requireClient() {
 }
 var clientExports = requireClient();
 var reactExports = requireReact();
+function DraftDial({
+  label: label2,
+  caption = label2,
+  value,
+  min,
+  max,
+  step = 1,
+  fineStep = step / 10,
+  disabled = false,
+  onChange
+}) {
+  const drag = reactExports.useRef(null), input = reactExports.useRef(null), bounded = (value2) => Math.max(min, Math.min(max, value2));
+  const shown = Number.isFinite(value) ? bounded(value) : min;
+  const hint = `Drag or use arrow keys${fineStep < step ? " · Shift for fine control" : ""}`;
+  reactExports.useEffect(() => {
+    if (disabled) drag.current = null;
+  }, [disabled]);
+  function change(value2, increment = step) {
+    const next = bounded(Number((Math.round(value2 / increment) * increment).toFixed(6)));
+    if (next !== shown) onChange(next);
+  }
+  function keyDown(event) {
+    if (disabled) return;
+    const increment = event.shiftKey ? fineStep : step;
+    const direction = {
+      ArrowUp: 1,
+      ArrowRight: 1,
+      ArrowDown: -1,
+      ArrowLeft: -1,
+      PageUp: 10,
+      PageDown: -10
+    }[event.key];
+    if (direction === void 0 && event.key !== "Home" && event.key !== "End") return;
+    event.preventDefault();
+    event.stopPropagation();
+    const next = bounded(
+      event.key === "Home" ? min : event.key === "End" ? max : Number((shown + direction * increment).toFixed(9))
+    );
+    if (next !== shown) onChange(next);
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "draft-dial", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: caption }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "span",
+      {
+        className: "draft-dial-ring",
+        title: hint,
+        style: { "--dial-angle": `${-135 + (shown - min) / (max - min) * 270}deg` },
+        onPointerDown: (event) => {
+          var _a, _b, _c;
+          if (disabled || event.button !== 0) return;
+          event.preventDefault();
+          (_a = input.current) == null ? void 0 : _a.focus({ preventScroll: true });
+          (_c = (_b = event.currentTarget).setPointerCapture) == null ? void 0 : _c.call(_b, event.pointerId);
+          drag.current = { x: event.clientX, y: event.clientY, value: shown };
+        },
+        onPointerMove: (event) => {
+          if (!drag.current || disabled) return;
+          const previous = drag.current;
+          previous.value = bounded(
+            previous.value + (event.clientX - previous.x - (event.clientY - previous.y)) * (max - min) / 200 / (event.shiftKey ? 10 : 1)
+          );
+          previous.x = event.clientX;
+          previous.y = event.clientY;
+          change(previous.value, event.shiftKey ? fineStep : step);
+        },
+        onPointerUp: () => {
+          drag.current = null;
+        },
+        onPointerCancel: () => {
+          drag.current = null;
+        },
+        onLostPointerCapture: () => {
+          drag.current = null;
+        },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("i", { "aria-hidden": "true" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "input",
+            {
+              ref: input,
+              type: "range",
+              min,
+              max,
+              step: "any",
+              value: shown,
+              disabled,
+              "aria-label": `${label2} dial`,
+              "aria-description": hint,
+              "aria-valuetext": String(value),
+              onChange: (event) => {
+                if (!disabled) change(event.target.valueAsNumber);
+              },
+              onKeyDown: keyDown,
+              onBlur: () => {
+                drag.current = null;
+              }
+            }
+          )
+        ]
+      }
+    )
+  ] });
+}
+const Context = reactExports.createContext(null);
+function createRetainedViewStore() {
+  const fields = /* @__PURE__ */ new Map(), refs = /* @__PURE__ */ new Map(), identity = (scope, key) => JSON.stringify([scope, key]);
+  return {
+    field(scope, key, initial) {
+      const id = identity(scope, key);
+      if (!fields.has(id)) {
+        let value = typeof initial === "function" ? initial() : initial;
+        const listeners = /* @__PURE__ */ new Set();
+        fields.set(id, {
+          read: () => value,
+          subscribe: (listener) => {
+            listeners.add(listener);
+            return () => listeners.delete(listener);
+          },
+          write: (update) => {
+            const next = typeof update === "function" ? update(value) : update;
+            if (Object.is(next, value)) return;
+            value = next;
+            [...listeners].forEach((listener) => listener());
+          },
+          listenerCount: () => listeners.size
+        });
+      }
+      return fields.get(id);
+    },
+    ref(scope, key, initial) {
+      const id = identity(scope, key);
+      if (!refs.has(id)) refs.set(id, { current: initial });
+      return refs.get(id);
+    },
+    listenerCount: () => [...fields.values()].reduce((sum, field) => sum + field.listenerCount(), 0)
+  };
+}
+function RetainedViewBoundary({ children, store }) {
+  const inherited = reactExports.useContext(Context), own = reactExports.useRef(null);
+  if (!store && !inherited && !own.current) own.current = createRetainedViewStore();
+  const selected = store ?? inherited ?? own.current;
+  return selected === inherited ? children : reactExports.createElement(Context.Provider, { value: selected }, children);
+}
+function useStore() {
+  const inherited = reactExports.useContext(Context), own = reactExports.useRef(null);
+  if (!inherited && !own.current) own.current = createRetainedViewStore();
+  return inherited ?? own.current;
+}
+function useRetainedState(scope, key, initial) {
+  const field = useStore().field(scope, key, initial);
+  const value = reactExports.useSyncExternalStore(field.subscribe, field.read, field.read);
+  return [value, field.write];
+}
+const NOTE_NAMES$1 = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+const LEARN_KEYS$1 = NOTE_NAMES$1.map((name, value) => ({ value, name }));
+const tuning$1 = (id, name, notes) => ({ id, name, notes, openNotes: notes.map(midiNoteName$1) });
+const LEARN_TUNINGS$1 = [
+  tuning$1("standard", "Standard E", [40, 45, 50, 55, 59, 64]),
+  tuning$1("drop-d", "Drop D", [38, 45, 50, 55, 59, 64]),
+  tuning$1("facgce", "FACGCE", [41, 45, 48, 55, 60, 64]),
+  tuning$1("dadgad", "DADGAD", [38, 45, 50, 55, 57, 62]),
+  tuning$1("open-d", "Open D", [38, 45, 50, 54, 57, 62]),
+  tuning$1("drop-c", "Drop C", [36, 43, 48, 53, 57, 62]),
+  tuning$1("seven-standard", "7-string B standard", [35, 40, 45, 50, 55, 59, 64]),
+  tuning$1("daeacse", "DAEAC#E", [38, 45, 52, 57, 61, 64]),
+  tuning$1("cgdgbd", "CGDGBD", [36, 43, 50, 55, 59, 62])
+];
+function pitchClass$2(note) {
+  return (Math.trunc(Number(note) || 0) % 12 + 12) % 12;
+}
+function midiNoteName$1(midi) {
+  return NOTE_NAMES$1[pitchClass$2(midi)] + (Math.floor(midi / 12) - 1);
+}
+function getLearnTuning$1(id = "standard") {
+  return LEARN_TUNINGS$1.find((item) => item.id === id) || LEARN_TUNINGS$1[0];
+}
+function guitarStringLabel(openMidi, highest = false) {
+  const name = NOTE_NAMES$1[pitchClass$2(openMidi)];
+  return highest && name === "E" ? "e" : name;
+}
+const MORE_ARPEGGIO_PROGRESSIONS = [
+  {
+    id: "metal-study-1",
+    genre: "Metal",
+    name: "Doom descent",
+    formula: "i – bVII – bVI – V",
+    steps: [
+      [0, "minor"],
+      [10, "major"],
+      [8, "major"],
+      [7, "major"]
+    ]
+  },
+  {
+    id: "metal-study-2",
+    genre: "Metal",
+    name: "Blackened cadence",
+    formula: "i – bII – iv – V",
+    steps: [
+      [0, "minor"],
+      [1, "major"],
+      [5, "minor"],
+      [7, "major"]
+    ]
+  },
+  {
+    id: "metal-study-3",
+    genre: "Metal",
+    name: "Dorian lift",
+    formula: "i7 – IV – bVII – i7",
+    steps: [
+      [0, "m7"],
+      [5, "major"],
+      [10, "major"],
+      [0, "m7"]
+    ]
+  },
+  {
+    id: "metal-study-4",
+    genre: "Metal",
+    name: "Chromatic pressure",
+    formula: "i – bII – ii° – i",
+    steps: [
+      [0, "minor"],
+      [1, "major"],
+      [2, "dim7"],
+      [0, "minor"]
+    ]
+  },
+  {
+    id: "metal-study-5",
+    genre: "Metal",
+    name: "Minor-third shifts",
+    formula: "i – biii – bvi – i",
+    steps: [
+      [0, "minor"],
+      [3, "minor"],
+      [8, "minor"],
+      [0, "minor"]
+    ]
+  },
+  {
+    id: "metal-study-6",
+    genre: "Metal",
+    name: "Epic eight-chord ascent",
+    formula: "i – bVI – bIII – bVII – iv – i – V7 – i",
+    steps: [
+      [0, "minor"],
+      [8, "major"],
+      [3, "major"],
+      [10, "major"],
+      [5, "minor"],
+      [0, "minor"],
+      [7, "7"],
+      [0, "minor"]
+    ]
+  },
+  {
+    id: "metal-study-7",
+    genre: "Metal",
+    name: "Diminished gateway",
+    formula: "i – vii°7 – i – V7b9",
+    steps: [
+      [0, "minor"],
+      [11, "dim7"],
+      [0, "minor"],
+      [7, "7b9"]
+    ]
+  },
+  {
+    id: "metal-study-8",
+    genre: "Metal",
+    name: "Open suspended weight",
+    formula: "Isus2 – bVIadd9 – bVII – Isus2",
+    steps: [
+      [0, "sus2"],
+      [8, "add9"],
+      [10, "major"],
+      [0, "sus2"]
+    ]
+  },
+  {
+    id: "rock-study-1",
+    genre: "Rock",
+    name: "Minor verse, major lift",
+    formula: "i – bVI – bIII – bVII",
+    steps: [
+      [0, "minor"],
+      [8, "major"],
+      [3, "major"],
+      [10, "major"]
+    ]
+  },
+  {
+    id: "rock-study-2",
+    genre: "Rock",
+    name: "Major road home",
+    formula: "I – IV – I – V",
+    steps: [
+      [0, "major"],
+      [5, "major"],
+      [0, "major"],
+      [7, "major"]
+    ]
+  },
+  {
+    id: "rock-study-3",
+    genre: "Rock",
+    name: "Borrowed minor four",
+    formula: "I – IV – iv – I",
+    steps: [
+      [0, "major"],
+      [5, "major"],
+      [5, "minor"],
+      [0, "major"]
+    ]
+  },
+  {
+    id: "rock-study-4",
+    genre: "Rock",
+    name: "Dorian two-chord engine",
+    formula: "i7 – IV7",
+    steps: [
+      [0, "m7"],
+      [5, "7"]
+    ]
+  },
+  {
+    id: "rock-study-5",
+    genre: "Rock",
+    name: "Chromatic mediant lift",
+    formula: "I – bIII – IV – I",
+    steps: [
+      [0, "major"],
+      [3, "major"],
+      [5, "major"],
+      [0, "major"]
+    ]
+  },
+  {
+    id: "rock-study-6",
+    genre: "Rock",
+    name: "Secondary dominant drive",
+    formula: "I – III7 – vi – IV",
+    steps: [
+      [0, "major"],
+      [4, "7"],
+      [9, "minor"],
+      [5, "major"]
+    ]
+  },
+  {
+    id: "rock-study-7",
+    genre: "Rock",
+    name: "Suspended release",
+    formula: "Isus2 – IVadd9 – Vsus4 – V",
+    steps: [
+      [0, "sus2"],
+      [5, "add9"],
+      [7, "sus4"],
+      [7, "major"]
+    ]
+  },
+  {
+    id: "rock-study-8",
+    genre: "Rock",
+    name: "Eight-bar verse and chorus",
+    formula: "i – bVII – bVI – V – bVI – bIII – bVII – i",
+    steps: [
+      [0, "minor"],
+      [10, "major"],
+      [8, "major"],
+      [7, "major"],
+      [8, "major"],
+      [3, "major"],
+      [10, "major"],
+      [0, "minor"]
+    ]
+  },
+  {
+    id: "blues-study-1",
+    genre: "Blues",
+    name: "Twelve-bar foundation",
+    formula: "I7 I7 I7 I7 / IV7 IV7 I7 I7 / V7 IV7 I7 V7",
+    steps: [
+      [0, "7"],
+      [0, "7"],
+      [0, "7"],
+      [0, "7"],
+      [5, "7"],
+      [5, "7"],
+      [0, "7"],
+      [0, "7"],
+      [7, "7"],
+      [5, "7"],
+      [0, "7"],
+      [7, "7"]
+    ]
+  },
+  {
+    id: "blues-study-2",
+    genre: "Blues",
+    name: "Quick-change twelve",
+    formula: "I7 IV7 I7 I7 / IV7 IV7 I7 VI7 / ii7 V7 I7 V7",
+    steps: [
+      [0, "7"],
+      [5, "7"],
+      [0, "7"],
+      [0, "7"],
+      [5, "7"],
+      [5, "7"],
+      [0, "7"],
+      [9, "7"],
+      [2, "m7"],
+      [7, "7"],
+      [0, "7"],
+      [7, "7"]
+    ]
+  },
+  {
+    id: "blues-study-3",
+    genre: "Blues",
+    name: "Minor twelve-bar",
+    formula: "i7 i7 i7 i7 / iv7 iv7 i7 i7 / bVI7 V7 i7 V7",
+    steps: [
+      [0, "m7"],
+      [0, "m7"],
+      [0, "m7"],
+      [0, "m7"],
+      [5, "m7"],
+      [5, "m7"],
+      [0, "m7"],
+      [0, "m7"],
+      [8, "7"],
+      [7, "7"],
+      [0, "m7"],
+      [7, "7"]
+    ]
+  },
+  {
+    id: "blues-study-4",
+    genre: "Blues",
+    name: "Ninth-chord pocket",
+    formula: "I9 – IV9 – I9 – V9",
+    steps: [
+      [0, "9"],
+      [5, "9"],
+      [0, "9"],
+      [7, "9"]
+    ]
+  },
+  {
+    id: "blues-study-5",
+    genre: "Blues",
+    name: "Gospel blues cadence",
+    formula: "I7 – IV9 – iv6 – I7",
+    steps: [
+      [0, "7"],
+      [5, "9"],
+      [5, "m6"],
+      [0, "7"]
+    ]
+  },
+  {
+    id: "blues-study-6",
+    genre: "Blues",
+    name: "Diminished passing blues",
+    formula: "I7 – #iv°7 – IV7 – I7",
+    steps: [
+      [0, "7"],
+      [6, "dim7"],
+      [5, "7"],
+      [0, "7"]
+    ]
+  },
+  {
+    id: "blues-study-7",
+    genre: "Blues",
+    name: "Jazz-blues turnaround",
+    formula: "I7 – VI7 – ii7 – V7",
+    steps: [
+      [0, "7"],
+      [9, "7"],
+      [2, "m7"],
+      [7, "7"]
+    ]
+  },
+  {
+    id: "blues-study-8",
+    genre: "Blues",
+    name: "Minor dominant conversation",
+    formula: "i9 – iv9 – V7#9 – i9",
+    steps: [
+      [0, "m9"],
+      [5, "m9"],
+      [7, "7s9"],
+      [0, "m9"]
+    ]
+  },
+  {
+    id: "jazz-study-1",
+    genre: "Jazz",
+    name: "Major ii–V–I",
+    formula: "ii7 – V7 – Imaj7 – Imaj7",
+    steps: [
+      [2, "m7"],
+      [7, "7"],
+      [0, "maj7"],
+      [0, "maj7"]
+    ]
+  },
+  {
+    id: "jazz-study-2",
+    genre: "Jazz",
+    name: "Rhythm turnaround",
+    formula: "Imaj7 – VI7 – ii7 – V7",
+    steps: [
+      [0, "maj7"],
+      [9, "7"],
+      [2, "m7"],
+      [7, "7"]
+    ]
+  },
+  {
+    id: "jazz-study-3",
+    genre: "Jazz",
+    name: "Backdoor resolution",
+    formula: "iv7 – bVII7 – Imaj7",
+    steps: [
+      [5, "m7"],
+      [10, "7"],
+      [0, "maj7"]
+    ]
+  },
+  {
+    id: "jazz-study-4",
+    genre: "Jazz",
+    name: "Tritone substitute",
+    formula: "ii9 – bII7 – Imaj9",
+    steps: [
+      [2, "m9"],
+      [1, "7"],
+      [0, "maj9"]
+    ]
+  },
+  {
+    id: "jazz-study-5",
+    genre: "Jazz",
+    name: "Modal minor study",
+    formula: "i11 – bIImaj7",
+    steps: [
+      [0, "m11"],
+      [1, "maj7"]
+    ]
+  },
+  {
+    id: "jazz-study-6",
+    genre: "Jazz",
+    name: "Minor sixth cadence",
+    formula: "iiø7 – V7b9 – i6",
+    steps: [
+      [2, "m7b5"],
+      [7, "7b9"],
+      [0, "m6"]
+    ]
+  },
+  {
+    id: "jazz-study-7",
+    genre: "Jazz",
+    name: "Diminished passing tones",
+    formula: "Imaj7 – #i°7 – ii7 – V7",
+    steps: [
+      [0, "maj7"],
+      [1, "dim7"],
+      [2, "m7"],
+      [7, "7"]
+    ]
+  },
+  {
+    id: "jazz-study-8",
+    genre: "Jazz",
+    name: "Eight-chord fifths cycle",
+    formula: "iii7 – VI7 – ii7 – V7 – Imaj7 – IVmaj7 – viiø7 – III7",
+    steps: [
+      [4, "m7"],
+      [9, "7"],
+      [2, "m7"],
+      [7, "7"],
+      [0, "maj7"],
+      [5, "maj7"],
+      [11, "m7b5"],
+      [4, "7"]
+    ]
+  },
+  {
+    id: "pop-study-1",
+    genre: "Pop",
+    name: "Classic major return",
+    formula: "I – vi – IV – V",
+    steps: [
+      [0, "major"],
+      [9, "minor"],
+      [5, "major"],
+      [7, "major"]
+    ]
+  },
+  {
+    id: "pop-study-2",
+    genre: "Pop",
+    name: "Bright chorus",
+    formula: "IV – V – vi – I",
+    steps: [
+      [5, "major"],
+      [7, "major"],
+      [9, "minor"],
+      [0, "major"]
+    ]
+  },
+  {
+    id: "pop-study-3",
+    genre: "Pop",
+    name: "Minor four-chord loop",
+    formula: "i – bVI – bIII – bVII",
+    steps: [
+      [0, "minor"],
+      [8, "major"],
+      [3, "major"],
+      [10, "major"]
+    ]
+  },
+  {
+    id: "pop-study-4",
+    genre: "Pop",
+    name: "Tender minor four",
+    formula: "Imaj7 – IVmaj7 – iv6 – Imaj7",
+    steps: [
+      [0, "maj7"],
+      [5, "maj7"],
+      [5, "m6"],
+      [0, "maj7"]
+    ]
+  },
+  {
+    id: "pop-study-5",
+    genre: "Pop",
+    name: "Suspended chorus lift",
+    formula: "Iadd9 – V – vi7 – IVadd9",
+    steps: [
+      [0, "add9"],
+      [7, "major"],
+      [9, "m7"],
+      [5, "add9"]
+    ]
+  },
+  {
+    id: "pop-study-6",
+    genre: "Pop",
+    name: "Wistful descending thirds",
+    formula: "vi – IV – ii – V",
+    steps: [
+      [9, "minor"],
+      [5, "major"],
+      [2, "minor"],
+      [7, "major"]
+    ]
+  },
+  {
+    id: "pop-study-7",
+    genre: "Pop",
+    name: "Secondary dominant colour",
+    formula: "I – III7 – vi7 – IV",
+    steps: [
+      [0, "major"],
+      [4, "7"],
+      [9, "m7"],
+      [5, "major"]
+    ]
+  },
+  {
+    id: "pop-study-8",
+    genre: "Pop",
+    name: "Verse into chorus",
+    formula: "vi – IV – I – V – IV – V – I – I",
+    steps: [
+      [9, "minor"],
+      [5, "major"],
+      [0, "major"],
+      [7, "major"],
+      [5, "major"],
+      [7, "major"],
+      [0, "major"],
+      [0, "major"]
+    ]
+  },
+  {
+    id: "funk-soul-study-1",
+    genre: "Funk & Soul",
+    name: "Minor ninth vamp",
+    formula: "i9 – iv9",
+    steps: [
+      [0, "m9"],
+      [5, "m9"]
+    ]
+  },
+  {
+    id: "funk-soul-study-2",
+    genre: "Funk & Soul",
+    name: "Dominant pocket",
+    formula: "I9 – IV13",
+    steps: [
+      [0, "9"],
+      [5, "13"]
+    ]
+  },
+  {
+    id: "funk-soul-study-3",
+    genre: "Funk & Soul",
+    name: "Soul turnaround",
+    formula: "Imaj7 – VI7 – ii9 – V13",
+    steps: [
+      [0, "maj7"],
+      [9, "7"],
+      [2, "m9"],
+      [7, "13"]
+    ]
+  },
+  {
+    id: "funk-soul-study-4",
+    genre: "Funk & Soul",
+    name: "Backdoor soul",
+    formula: "IVmaj9 – iv9 – bVII13 – Imaj9",
+    steps: [
+      [5, "maj9"],
+      [5, "m9"],
+      [10, "13"],
+      [0, "maj9"]
+    ]
+  },
+  {
+    id: "funk-soul-study-5",
+    genre: "Funk & Soul",
+    name: "Chromatic dominant steps",
+    formula: "I9 – bII9 – I9 – V7#9",
+    steps: [
+      [0, "9"],
+      [1, "9"],
+      [0, "9"],
+      [7, "7s9"]
+    ]
+  },
+  {
+    id: "funk-soul-study-6",
+    genre: "Funk & Soul",
+    name: "Minor-major warmth",
+    formula: "i9 – bIIImaj7 – IV13 – i9",
+    steps: [
+      [0, "m9"],
+      [3, "maj7"],
+      [5, "13"],
+      [0, "m9"]
+    ]
+  },
+  {
+    id: "funk-soul-study-7",
+    genre: "Funk & Soul",
+    name: "Gospel plagal colours",
+    formula: "I6 – IVmaj9 – iv6 – Imaj9",
+    steps: [
+      [0, "6"],
+      [5, "maj9"],
+      [5, "m6"],
+      [0, "maj9"]
+    ]
+  },
+  {
+    id: "funk-soul-study-8",
+    genre: "Funk & Soul",
+    name: "Neo-soul long form",
+    formula: "ii9 – V13 – Imaj9 – VI7b9 – ii11 – bVII13 – Imaj9 – I6",
+    steps: [
+      [2, "m9"],
+      [7, "13"],
+      [0, "maj9"],
+      [9, "7b9"],
+      [2, "m11"],
+      [10, "13"],
+      [0, "maj9"],
+      [0, "6"]
+    ]
+  },
+  {
+    id: "country-study-1",
+    genre: "Country",
+    name: "Country turnaround",
+    formula: "I – vi – IV – V7",
+    steps: [
+      [0, "major"],
+      [9, "minor"],
+      [5, "major"],
+      [7, "7"]
+    ]
+  },
+  {
+    id: "country-study-2",
+    genre: "Country",
+    name: "Honky-tonk changes",
+    formula: "I7 – IV – I – V7",
+    steps: [
+      [0, "7"],
+      [5, "major"],
+      [0, "major"],
+      [7, "7"]
+    ]
+  },
+  {
+    id: "country-study-3",
+    genre: "Country",
+    name: "Waltz cadence",
+    formula: "I – IV – V7 – I",
+    steps: [
+      [0, "major"],
+      [5, "major"],
+      [7, "7"],
+      [0, "major"]
+    ]
+  },
+  {
+    id: "country-study-4",
+    genre: "Country",
+    name: "Bluegrass circle",
+    formula: "I – VI7 – II7 – V7",
+    steps: [
+      [0, "major"],
+      [9, "7"],
+      [2, "7"],
+      [7, "7"]
+    ]
+  },
+  {
+    id: "country-study-5",
+    genre: "Country",
+    name: "Minor frontier",
+    formula: "i – iv – V7 – i",
+    steps: [
+      [0, "minor"],
+      [5, "minor"],
+      [7, "7"],
+      [0, "minor"]
+    ]
+  },
+  {
+    id: "country-study-6",
+    genre: "Country",
+    name: "Western swing colours",
+    formula: "I6 – VI7 – ii7 – V9",
+    steps: [
+      [0, "6"],
+      [9, "7"],
+      [2, "m7"],
+      [7, "9"]
+    ]
+  },
+  {
+    id: "country-study-7",
+    genre: "Country",
+    name: "Borrowed-flat-seven road",
+    formula: "I – bVII – IV – I",
+    steps: [
+      [0, "major"],
+      [10, "major"],
+      [5, "major"],
+      [0, "major"]
+    ]
+  },
+  {
+    id: "country-study-8",
+    genre: "Country",
+    name: "Eight-bar homecoming",
+    formula: "I – I – IV – I – vi – ii – V7 – I",
+    steps: [
+      [0, "major"],
+      [0, "major"],
+      [5, "major"],
+      [0, "major"],
+      [9, "minor"],
+      [2, "minor"],
+      [7, "7"],
+      [0, "major"]
+    ]
+  },
+  {
+    id: "classical-study-1",
+    genre: "Classical",
+    name: "Major perfect cadence",
+    formula: "I – ii – V7 – I",
+    steps: [
+      [0, "major"],
+      [2, "minor"],
+      [7, "7"],
+      [0, "major"]
+    ]
+  },
+  {
+    id: "classical-study-2",
+    genre: "Classical",
+    name: "Plagal cadence",
+    formula: "I – IV – I",
+    steps: [
+      [0, "major"],
+      [5, "major"],
+      [0, "major"]
+    ]
+  },
+  {
+    id: "classical-study-3",
+    genre: "Classical",
+    name: "Interrupted cadence",
+    formula: "i – iv – V – bVI",
+    steps: [
+      [0, "minor"],
+      [5, "minor"],
+      [7, "major"],
+      [8, "major"]
+    ]
+  },
+  {
+    id: "classical-study-4",
+    genre: "Classical",
+    name: "Andalusian descent",
+    formula: "i – bVII – bVI – V",
+    steps: [
+      [0, "minor"],
+      [10, "major"],
+      [8, "major"],
+      [7, "major"]
+    ]
+  },
+  {
+    id: "classical-study-5",
+    genre: "Classical",
+    name: "Minor circle sequence",
+    formula: "i – iv – bVII – bIII – bVI – ii° – V7 – i",
+    steps: [
+      [0, "minor"],
+      [5, "minor"],
+      [10, "major"],
+      [3, "major"],
+      [8, "major"],
+      [2, "dim7"],
+      [7, "7"],
+      [0, "minor"]
+    ]
+  },
+  {
+    id: "classical-study-6",
+    genre: "Classical",
+    name: "Major circle sequence",
+    formula: "I – IV – vii° – iii – vi – ii – V7 – I",
+    steps: [
+      [0, "major"],
+      [5, "major"],
+      [11, "dim7"],
+      [4, "minor"],
+      [9, "minor"],
+      [2, "minor"],
+      [7, "7"],
+      [0, "major"]
+    ]
+  },
+  {
+    id: "classical-study-7",
+    genre: "Classical",
+    name: "Neapolitan cadence",
+    formula: "i – bII – V7 – i",
+    steps: [
+      [0, "minor"],
+      [1, "major"],
+      [7, "7"],
+      [0, "minor"]
+    ]
+  },
+  {
+    id: "classical-study-8",
+    genre: "Classical",
+    name: "Diminished leading tones",
+    formula: "i – vii°7 – i – iv – V7 – i",
+    steps: [
+      [0, "minor"],
+      [11, "dim7"],
+      [0, "minor"],
+      [5, "minor"],
+      [7, "7"],
+      [0, "minor"]
+    ]
+  },
+  {
+    id: "ambient-study-1",
+    genre: "Ambient",
+    name: "Major-nine drift",
+    formula: "Imaj9 – vi9 – IVmaj9 – Imaj9",
+    steps: [
+      [0, "maj9"],
+      [9, "m9"],
+      [5, "maj9"],
+      [0, "maj9"]
+    ]
+  },
+  {
+    id: "ambient-study-2",
+    genre: "Ambient",
+    name: "Suspended fifths",
+    formula: "Isus2 – Vsus4 – IVadd9 – Isus2",
+    steps: [
+      [0, "sus2"],
+      [7, "sus4"],
+      [5, "add9"],
+      [0, "sus2"]
+    ]
+  },
+  {
+    id: "ambient-study-3",
+    genre: "Ambient",
+    name: "Lydian light",
+    formula: "Imaj7#11 – IIadd9 – IVmaj7 – Imaj9",
+    steps: [
+      [0, "maj7s11"],
+      [2, "add9"],
+      [5, "maj7"],
+      [0, "maj9"]
+    ]
+  },
+  {
+    id: "ambient-study-4",
+    genre: "Ambient",
+    name: "Dorian dusk",
+    formula: "i11 – IVadd9 – bVIImaj7 – i9",
+    steps: [
+      [0, "m11"],
+      [5, "add9"],
+      [10, "maj7"],
+      [0, "m9"]
+    ]
+  },
+  {
+    id: "ambient-study-5",
+    genre: "Ambient",
+    name: "Minor-third nebula",
+    formula: "Imaj9 – bIIImaj9 – bVImaj9 – Imaj9",
+    steps: [
+      [0, "maj9"],
+      [3, "maj9"],
+      [8, "maj9"],
+      [0, "maj9"]
+    ]
+  },
+  {
+    id: "ambient-study-6",
+    genre: "Ambient",
+    name: "Minor suspended horizon",
+    formula: "i9 – bVIadd9 – iv11 – Vsus4",
+    steps: [
+      [0, "m9"],
+      [8, "add9"],
+      [5, "m11"],
+      [7, "sus4"]
+    ]
+  },
+  {
+    id: "ambient-study-7",
+    genre: "Ambient",
+    name: "Quiet open triads",
+    formula: "Iadd9 – IVadd9 – ii9 – Iadd9",
+    steps: [
+      [0, "add9"],
+      [5, "add9"],
+      [2, "m9"],
+      [0, "add9"]
+    ]
+  },
+  {
+    id: "ambient-study-8",
+    genre: "Ambient",
+    name: "Long-form unfolding",
+    formula: "Imaj9 – iii7 – vi9 – IVmaj7 – ii11 – Vsus4 – bVIImaj9 – Imaj9",
+    steps: [
+      [0, "maj9"],
+      [4, "m7"],
+      [9, "m9"],
+      [5, "maj7"],
+      [2, "m11"],
+      [7, "sus4"],
+      [10, "maj9"],
+      [0, "maj9"]
+    ]
+  }
+];
+const quality = (id, name, suffix, intervals, degrees) => ({
+  id,
+  name,
+  suffix,
+  intervals,
+  degrees
+});
+const ARPEGGIO_QUALITIES = [
+  quality("major", "Major", "", [0, 4, 7], ["1", "3", "5"]),
+  quality("minor", "Minor", "m", [0, 3, 7], ["1", "b3", "5"]),
+  quality("diminished", "Diminished", "dim", [0, 3, 6], ["1", "b3", "b5"]),
+  quality("augmented", "Augmented", "aug", [0, 4, 8], ["1", "3", "#5"]),
+  quality("sus2", "Suspended 2", "sus2", [0, 2, 7], ["1", "2", "5"]),
+  quality("sus4", "Suspended 4", "sus4", [0, 5, 7], ["1", "4", "5"]),
+  quality("6", "Major 6", "6", [0, 4, 7, 9], ["1", "3", "5", "6"]),
+  quality("m6", "Minor 6", "m6", [0, 3, 7, 9], ["1", "b3", "5", "6"]),
+  quality("maj7", "Major 7", "maj7", [0, 4, 7, 11], ["1", "3", "5", "7"]),
+  quality("m7", "Minor 7", "m7", [0, 3, 7, 10], ["1", "b3", "5", "b7"]),
+  quality("7", "Dominant 7", "7", [0, 4, 7, 10], ["1", "3", "5", "b7"]),
+  quality("m7b5", "Half-diminished 7", "m7b5", [0, 3, 6, 10], ["1", "b3", "b5", "b7"]),
+  quality("dim7", "Diminished 7", "dim7", [0, 3, 6, 9], ["1", "b3", "b5", "bb7"]),
+  quality("mMaj7", "Minor major 7", "m(maj7)", [0, 3, 7, 11], ["1", "b3", "5", "7"]),
+  quality("augMaj7", "Augmented major 7", "aug(maj7)", [0, 4, 8, 11], ["1", "3", "#5", "7"]),
+  quality("7s5", "Dominant 7 sharp 5", "7#5", [0, 4, 8, 10], ["1", "3", "#5", "b7"]),
+  quality("7sus4", "Dominant 7 suspended 4", "7sus4", [0, 5, 7, 10], ["1", "4", "5", "b7"]),
+  quality("add9", "Add 9", "add9", [0, 4, 7, 14], ["1", "3", "5", "9"]),
+  quality("maj9", "Major 9", "maj9", [0, 4, 7, 11, 14], ["1", "3", "5", "7", "9"]),
+  quality("m9", "Minor 9", "m9", [0, 3, 7, 10, 14], ["1", "b3", "5", "b7", "9"]),
+  quality("9", "Dominant 9", "9", [0, 4, 7, 10, 14], ["1", "3", "5", "b7", "9"]),
+  quality("7b9", "Dominant 7 flat 9", "7b9", [0, 4, 7, 10, 13], ["1", "3", "5", "b7", "b9"]),
+  quality("7s9", "Dominant 7 sharp 9", "7#9", [0, 4, 7, 10, 15], ["1", "3", "5", "b7", "#9"]),
+  quality("m11", "Minor 11", "m11", [0, 3, 7, 10, 14, 17], ["1", "b3", "5", "b7", "9", "11"]),
+  quality(
+    "13",
+    "Dominant 13",
+    "13",
+    [0, 4, 7, 10, 14, 17, 21],
+    ["1", "3", "5", "b7", "9", "11", "13"]
+  ),
+  quality(
+    "maj13",
+    "Major 13",
+    "maj13",
+    [0, 4, 7, 11, 14, 17, 21],
+    ["1", "3", "5", "7", "9", "11", "13"]
+  ),
+  quality(
+    "m13",
+    "Minor 13",
+    "m13",
+    [0, 3, 7, 10, 14, 17, 21],
+    ["1", "b3", "5", "b7", "9", "11", "13"]
+  ),
+  quality("maj7s11", "Major 7 sharp 11", "maj7#11", [0, 4, 7, 11, 18], ["1", "3", "5", "7", "#11"])
+];
+const HARMONY_SCALES = [
+  { id: "major", name: "Major", intervals: [0, 2, 4, 5, 7, 9, 11] },
+  { id: "minor", name: "Natural minor", intervals: [0, 2, 3, 5, 7, 8, 10] },
+  { id: "harmonic-minor", name: "Harmonic minor", intervals: [0, 2, 3, 5, 7, 8, 11] },
+  { id: "melodic-minor", name: "Melodic minor · ascending", intervals: [0, 2, 3, 5, 7, 9, 11] }
+];
+const INTERVAL_STUDIES = [
+  ["Unison", "1", 0, "Same pitch"],
+  ["Minor second", "b2", 1, "One fret"],
+  ["Major second", "2", 2, "Two frets"],
+  ["Minor third", "b3", 3, "Minor chord colour"],
+  ["Major third", "3", 4, "Major chord colour"],
+  ["Perfect fourth", "4", 5, "Five semitones"],
+  ["Tritone", "b5 / #4", 6, "Six semitones"],
+  ["Perfect fifth", "5", 7, "Power-chord foundation"],
+  ["Minor sixth", "b6", 8, "Eight semitones"],
+  ["Major sixth", "6", 9, "Nine semitones"],
+  ["Minor seventh", "b7", 10, "Dominant and minor 7 colour"],
+  ["Major seventh", "7", 11, "One below the octave"],
+  ["Octave", "8", 12, "Same note name, twelve frets higher"]
+];
+const ARPEGGIO_PATTERNS = [
+  { id: "up", name: "Ascending" },
+  { id: "down", name: "Descending" },
+  { id: "up-down", name: "Up & down" },
+  { id: "outside-in", name: "Outside in" },
+  { id: "rolling-fours", name: "Rolling groups of four" },
+  { id: "skip-tone", name: "1–3 / 2–4 chord-tone sequences" }
+];
+const ARPEGGIO_METERS = ["2/4", "3/4", "4/4", "5/4", "6/8", "7/8"];
+const ARPEGGIO_RATES = [
+  { id: "quarter", name: "Quarter notes", ticks: 480 },
+  { id: "eighth", name: "Eighth notes", ticks: 240 },
+  { id: "triplet", name: "Eighth-note triplets", ticks: 160 },
+  { id: "sixteenth", name: "Sixteenth notes", ticks: 120 }
+];
+const ARPEGGIO_TEMPLATES = [
+  {
+    id: "jazz",
+    genre: "Jazz",
+    formula: "ii9 – V13 – Imaj9 – vi7",
+    name: "Extended ii–V–I",
+    steps: [
+      [2, "m9"],
+      [7, "13"],
+      [0, "maj9"],
+      [9, "m7"]
+    ]
+  },
+  {
+    id: "minor",
+    genre: "Metal",
+    formula: "i9 – iv7 – vii°7 – V7b9",
+    name: "Minor turnaround",
+    steps: [
+      [0, "m9"],
+      [5, "m7"],
+      [11, "dim7"],
+      [7, "7b9"]
+    ]
+  },
+  {
+    id: "soul",
+    genre: "Funk & Soul",
+    formula: "Imaj9 – iii7 – vi9 – ii11",
+    name: "Soul colours",
+    steps: [
+      [0, "maj9"],
+      [4, "m7"],
+      [9, "m9"],
+      [2, "m11"]
+    ]
+  },
+  {
+    id: "pop",
+    genre: "Pop",
+    formula: "I – V – vi – IV",
+    name: "Four-chord foundation",
+    steps: [
+      [0, "major"],
+      [7, "major"],
+      [9, "minor"],
+      [5, "major"]
+    ]
+  }
+];
+const genreProgression = (id, genre, name, formula, steps) => ({ id, genre, name, formula, steps });
+ARPEGGIO_TEMPLATES.push(
+  genreProgression("metal-minor", "Metal", "Dark minor anthem", "i – bVI – bVII – i", [
+    [0, "minor"],
+    [8, "major"],
+    [10, "major"],
+    [0, "minor"]
+  ]),
+  genreProgression("metal-phrygian", "Metal", "Phrygian tension", "i – bII – i – bVII", [
+    [0, "minor"],
+    [1, "major"],
+    [0, "minor"],
+    [10, "major"]
+  ]),
+  genreProgression("metal-harmonic", "Metal", "Harmonic minor drama", "i – bVI – iv – V7", [
+    [0, "minor"],
+    [8, "major"],
+    [5, "minor"],
+    [7, "7"]
+  ]),
+  genreProgression(
+    "metal-progressive",
+    "Metal",
+    "Progressive colours",
+    "i9 – bVImaj7 – iv11 – V7b9",
+    [
+      [0, "m9"],
+      [8, "maj7"],
+      [5, "m11"],
+      [7, "7b9"]
+    ]
+  ),
+  genreProgression("rock-minor", "Rock", "Minor rock lift", "i – bVII – IV – i", [
+    [0, "minor"],
+    [10, "major"],
+    [5, "major"],
+    [0, "minor"]
+  ]),
+  genreProgression("rock-anthem", "Rock", "Open-chord anthem", "I – bVII – IV – I", [
+    [0, "major"],
+    [10, "major"],
+    [5, "major"],
+    [0, "major"]
+  ]),
+  genreProgression("blues-turn", "Blues", "Dominant turnaround", "I7 – IV7 – I7 – V7", [
+    [0, "7"],
+    [5, "7"],
+    [0, "7"],
+    [7, "7"]
+  ]),
+  genreProgression("blues-minor", "Blues", "Minor blues colours", "i7 – iv7 – bVI7 – V7", [
+    [0, "m7"],
+    [5, "m7"],
+    [8, "7"],
+    [7, "7"]
+  ]),
+  genreProgression("jazz-minor", "Jazz", "Minor ii–V–i", "iiø7 – V7b9 – i(maj7)", [
+    [2, "m7b5"],
+    [7, "7b9"],
+    [0, "mMaj7"]
+  ]),
+  genreProgression("jazz-cycle", "Jazz", "Descending fifths", "iii7 – VI7 – ii7 – V7", [
+    [4, "m7"],
+    [9, "7"],
+    [2, "m7"],
+    [7, "7"]
+  ]),
+  genreProgression("pop-singer", "Pop", "Singer-songwriter turn", "vi – IV – I – V", [
+    [9, "minor"],
+    [5, "major"],
+    [0, "major"],
+    [7, "major"]
+  ]),
+  genreProgression("funk-dorian", "Funk & Soul", "Dorian pocket", "i9 – IV13", [
+    [0, "m9"],
+    [5, "13"]
+  ]),
+  genreProgression("country-road", "Country", "Open-road changes", "I – IV – V – I", [
+    [0, "major"],
+    [5, "major"],
+    [7, "major"],
+    [0, "major"]
+  ]),
+  genreProgression("country-six", "Country", "Sixth-chord stroll", "I6 – vi7 – ii7 – V7", [
+    [0, "6"],
+    [9, "m7"],
+    [2, "m7"],
+    [7, "7"]
+  ]),
+  genreProgression("classical-minor", "Classical", "Minor cadence", "i – iv – V – i", [
+    [0, "minor"],
+    [5, "minor"],
+    [7, "major"],
+    [0, "minor"]
+  ]),
+  genreProgression("classical-cycle", "Classical", "Circle sequence", "i – iv – bVII – bIII", [
+    [0, "minor"],
+    [5, "minor"],
+    [10, "major"],
+    [3, "major"]
+  ]),
+  genreProgression(
+    "ambient-major",
+    "Ambient",
+    "Open-sky extensions",
+    "Imaj9 – IVmaj7 – vi9 – Vsus4",
+    [
+      [0, "maj9"],
+      [5, "maj7"],
+      [9, "m9"],
+      [7, "sus4"]
+    ]
+  ),
+  genreProgression(
+    "ambient-minor",
+    "Ambient",
+    "Suspended minor space",
+    "i9 – bVImaj9 – bIIImaj7 – bVIIadd9",
+    [
+      [0, "m9"],
+      [8, "maj9"],
+      [3, "maj7"],
+      [10, "add9"]
+    ]
+  )
+);
+ARPEGGIO_TEMPLATES.push(...MORE_ARPEGGIO_PROGRESSIONS);
+const ARPEGGIO_GENRES = [
+  "Metal",
+  "Rock",
+  "Blues",
+  "Jazz",
+  "Pop",
+  "Funk & Soul",
+  "Country",
+  "Classical",
+  "Ambient"
+];
+const MAX_ARPEGGIO_STEPS = 32;
+const ARPEGGIO_STORAGE_KEY = "cassian.learn.arpeggios.v1";
+const clamp = (value, min, max, fallback) => Number.isFinite(Number(value)) ? Math.min(max, Math.max(min, Math.round(Number(value)))) : fallback;
+const getArpeggioQuality = (id) => ARPEGGIO_QUALITIES.find((item) => item.id === id) ?? ARPEGGIO_QUALITIES[0];
+const getArpeggioRoot = (key, step) => pitchClass$2(key + step.offset);
+const arpeggioName = (key, step) => NOTE_NAMES$1[getArpeggioRoot(key, step)] + getArpeggioQuality(step.quality).suffix;
+function parseArpeggioSequence(text, key = 0, firstId = 1) {
+  const source = String(text).trim().replaceAll("♯", "#").replaceAll("♭", "b");
+  if (!source || source.length > 256)
+    throw new Error("Enter a chord sequence, for example E C D B or Em7 Cmaj7 D B7.");
+  const aliases = /* @__PURE__ */ new Map();
+  for (const chord of ARPEGGIO_QUALITIES) {
+    aliases.set(chord.id.toLowerCase(), chord.id);
+    aliases.set(chord.suffix.toLowerCase(), chord.id);
+  }
+  aliases.set("min", "minor");
+  aliases.set("maj", "major");
+  const notePitch = (letter, accidental = "") => pitchClass$2(
+    { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[letter.toUpperCase()] + (accidental === "#" ? 1 : accidental === "b" ? -1 : 0)
+  );
+  const parseChord = (token) => {
+    const match = /^([A-Ga-g])([#b]?)([^/]*)(?:\/([A-Ga-g])([#b]?))?$/.exec(token);
+    if (!match) throw new Error(`Could not read “${token}”. Separate chords with spaces.`);
+    const suffix = match[3];
+    const id = suffix === "M" ? "major" : suffix === "M7" ? "maj7" : aliases.get(suffix.toLowerCase());
+    if (!id) throw new Error(`Unsupported chord “${token}”. Choose a chord type from the builder.`);
+    const root = notePitch(match[1], match[2]), chord = getArpeggioQuality(id);
+    const bass = match[4] ? notePitch(match[4], match[5]) : root;
+    const inversion = chord.intervals.findIndex((interval) => pitchClass$2(root + interval) === bass);
+    if (inversion < 0)
+      throw new Error(`The bass note in “${token}” must be one of its chord tones.`);
+    return { offset: pitchClass$2(root - key), quality: id, inversion, bars: 1, pattern: "up-down" };
+  };
+  let tokens;
+  if (/[\s,|→–—-]/.test(source)) tokens = source.split(/[\s,|→–—-]+/).filter(Boolean);
+  else {
+    try {
+      return [{ ...parseChord(source), id: firstId }];
+    } catch {
+    }
+    tokens = [];
+    const compact = /[A-G][#b]?[^A-G/\s]*(?:\/[A-G][#b]?)?/gy;
+    let cursor = 0, match;
+    while (match = compact.exec(source)) {
+      tokens.push(match[0]);
+      cursor = compact.lastIndex;
+    }
+    if (cursor !== source.length)
+      throw new Error("Use chord names such as E C D B. Unrecognized text was not added.");
+  }
+  if (!tokens.length || tokens.length > MAX_ARPEGGIO_STEPS)
+    throw new Error("A progression can contain 1–32 chords.");
+  return tokens.map((token, index) => ({ ...parseChord(token), id: firstId + index }));
+}
+function spellChordTones(root, id) {
+  const selected = getArpeggioQuality(id);
+  const rootName = NOTE_NAMES$1[pitchClass$2(root)];
+  const letters = ["C", "D", "E", "F", "G", "A", "B"];
+  const natural = [0, 2, 4, 5, 7, 9, 11];
+  const start = letters.indexOf(rootName[0]);
+  return selected.intervals.map((interval, index) => {
+    const degree = Number(selected.degrees[index].replace(/[^0-9]/g, ""));
+    const letter = (start + degree - 1) % 7;
+    let alteration = pitchClass$2(root + interval - natural[letter]);
+    if (alteration > 6) alteration -= 12;
+    const name = letters[letter] + (alteration < 0 ? "b".repeat(-alteration) : "#".repeat(alteration));
+    return { name, degree: selected.degrees[index], pitch: pitchClass$2(root + interval) };
+  });
+}
+function createArpeggioProgression(templateId = "jazz") {
+  const template = ARPEGGIO_TEMPLATES.find((item) => item.id === templateId) ?? ARPEGGIO_TEMPLATES[0];
+  return {
+    version: 1,
+    name: template.name,
+    key: 4,
+    tuning: "standard",
+    tempo: 90,
+    meter: "4/4",
+    rate: "eighth",
+    octaves: 1,
+    minFret: 0,
+    maxFret: 5,
+    runRange: "octaves",
+    strings: "all",
+    connect: true,
+    steps: template.steps.map(([offset, chord], index) => ({
+      id: index + 1,
+      offset,
+      quality: chord,
+      inversion: 0,
+      bars: 1,
+      pattern: "up-down"
+    })),
+    nextId: template.steps.length + 1
+  };
+}
+function normalizeArpeggioProgression(input) {
+  if (!input || input.version !== 1 || !Array.isArray(input.steps) || !input.steps.length || input.steps.length > MAX_ARPEGGIO_STEPS)
+    throw new Error("Choose a Cassian arpeggio progression with 1–32 chords.");
+  const defaults = createArpeggioProgression();
+  const steps = input.steps.map((step, index) => {
+    if (!step || !ARPEGGIO_QUALITIES.some((item) => item.id === step.quality) || !Number.isFinite(step.offset))
+      throw new Error("This progression contains an unsupported chord.");
+    const selected = getArpeggioQuality(step.quality);
+    return {
+      id: index + 1,
+      offset: pitchClass$2(step.offset),
+      quality: selected.id,
+      inversion: clamp(step.inversion, 0, selected.intervals.length - 1, 0),
+      bars: clamp(step.bars, 1, 8, 1),
+      pattern: ARPEGGIO_PATTERNS.some((item) => item.id === step.pattern) ? step.pattern : "up"
+    };
+  });
+  const minFret = clamp(input.minFret, 0, 19, 0);
+  return {
+    ...defaults,
+    name: String(input.name || "My progression").replace(/[\u0000-\u001f]/g, "").slice(0, 80),
+    key: pitchClass$2(input.key),
+    tuning: getLearnTuning$1(input.tuning).id,
+    tempo: clamp(input.tempo, 40, 240, 90),
+    meter: ARPEGGIO_METERS.includes(input.meter) ? input.meter : "4/4",
+    rate: ARPEGGIO_RATES.some((item) => item.id === input.rate) ? input.rate : "eighth",
+    octaves: clamp(input.octaves, 1, 2, 1),
+    runRange: input.runRange === "full-neck" ? "full-neck" : "octaves",
+    minFret,
+    maxFret: clamp(input.maxFret, minFret + 3, 24, Math.max(5, minFret + 3)),
+    strings: ["all", "upper3", "upper4", "lower4"].includes(input.strings) ? input.strings : "all",
+    connect: input.connect !== false,
+    steps,
+    nextId: steps.length + 1
+  };
+}
+function harmonizeArpeggios(scaleId, sevenths = true) {
+  const scale = HARMONY_SCALES.find((item) => item.id === scaleId) ?? HARMONY_SCALES[0];
+  return scale.intervals.map((offset, degree) => {
+    const intervals = Array.from({ length: sevenths ? 4 : 3 }, (_, index) => {
+      const position = degree + index * 2;
+      return scale.intervals[position % 7] + Math.floor(position / 7) * 12 - offset;
+    });
+    const match = ARPEGGIO_QUALITIES.find(
+      (item) => item.intervals.length === intervals.length && item.intervals.every((value, index) => value === intervals[index])
+    );
+    return { offset, quality: match == null ? void 0 : match.id, degree: degree + 1 };
+  });
+}
+function applyArpeggioPattern(path, pattern) {
+  if (pattern === "down") return [...path].reverse();
+  if (pattern === "up-down") return [...path, ...path.slice(1, -1).reverse()];
+  if (pattern === "outside-in") {
+    const notes = [];
+    for (let low = 0, high = path.length - 1; low <= high; low += 1, high -= 1) {
+      notes.push(path[low]);
+      if (low !== high) notes.push(path[high]);
+    }
+    return notes;
+  }
+  if (pattern === "rolling-fours") {
+    if (path.length < 4) return path;
+    return Array.from(
+      { length: path.length - 3 },
+      (_, index) => path.slice(index, index + 4)
+    ).flat();
+  }
+  if (pattern === "skip-tone") {
+    const sequence = [];
+    for (let index = 0; index < path.length - 2; index += 1)
+      sequence.push(path[index], path[index + 2]);
+    sequence.push(...path.slice(-2));
+    return sequence;
+  }
+  return path;
+}
+function buildArpeggioPath(root, step, options = {}, previousMidi = null) {
+  var _a;
+  const selected = getArpeggioQuality(step.quality);
+  const tuning2 = getLearnTuning$1(options.tuning);
+  const minFret = clamp(options.minFret, 0, 19, 0);
+  const maxFret = clamp(options.maxFret, minFret + 3, 24, Math.max(5, minFret + 3));
+  const octaves = clamp(options.octaves, 1, 2, 1);
+  const wholeNeck = options.runRange === "full-neck";
+  const inversion = clamp(step.inversion, 0, selected.intervals.length - 1, 0);
+  const bass = pitchClass$2(root + selected.intervals[inversion]);
+  const pitches = [...new Set(selected.intervals.map((interval) => pitchClass$2(root + interval)))];
+  const relative = pitches.map((pitch) => pitchClass$2(pitch - bass)).sort((a, b) => a - b);
+  const offsets = Array.from(
+    { length: octaves },
+    (_, octave) => relative.map((offset) => offset + octave * 12)
+  ).flat();
+  offsets.push(octaves * 12);
+  const cells = tuning2.notes.flatMap((open2, stringIndex) => {
+    const count = tuning2.notes.length;
+    if (options.strings === "upper3" && stringIndex < count - 3) return [];
+    if (options.strings === "upper4" && stringIndex < count - 4) return [];
+    if (options.strings === "lower4" && stringIndex >= 4) return [];
+    return Array.from({ length: maxFret - minFret + 1 }, (_, index) => ({
+      stringIndex,
+      fret: minFret + index,
+      midi: open2 + minFret + index
+    }));
+  });
+  const nameFor = (midi) => {
+    const tone = spellChordTones(root, selected.id).find((item) => item.pitch === pitchClass$2(midi));
+    return { ...tone, octave: Math.floor(midi / 12) - 1 };
+  };
+  const firstString = Math.min(...cells.map((cell) => cell.stringIndex));
+  const lastString = Math.max(...cells.map((cell) => cell.stringIndex));
+  const starts = [
+    ...new Set(
+      cells.filter(
+        (cell) => pitchClass$2(cell.midi) === bass && (!wholeNeck || cell.stringIndex === firstString)
+      ).map((cell) => cell.midi)
+    )
+  ].sort((a, b) => a - b);
+  const fullPitches = [
+    ...new Set(
+      cells.filter((cell) => pitches.includes(pitchClass$2(cell.midi))).map((cell) => cell.midi)
+    )
+  ].sort((a, b) => a - b);
+  let best = null;
+  for (const start of wholeNeck ? starts.slice(0, 1) : starts) {
+    const targets = wholeNeck ? fullPitches.filter((midi) => midi >= start) : offsets.map((offset) => start + offset);
+    let states = [
+      {
+        cost: previousMidi === null ? start * 0.025 : Math.abs(start - previousMidi) * 1.5,
+        notes: []
+      }
+    ];
+    for (const target of targets) {
+      const choices = cells.filter((cell) => cell.midi === target);
+      states = choices.map((cell) => {
+        let winner = null;
+        for (const state of states) {
+          const last = state.notes.at(-1);
+          if (wholeNeck && (last ? cell.stringIndex < last.stringIndex || cell.stringIndex > last.stringIndex + 1 : cell.stringIndex !== firstString))
+            continue;
+          const frets = state.notes.map((note) => note.fret);
+          const span = frets.length ? Math.max(...frets) - Math.min(...frets) : 0;
+          const nextSpan = Math.max(cell.fret, ...frets) - Math.min(cell.fret, ...frets);
+          const stretch = Math.max(0, nextSpan - 4) ** 2 - Math.max(0, span - 4) ** 2;
+          const cost = state.cost + (wholeNeck ? 0 : stretch * 3) + (last ? Math.abs(last.stringIndex - cell.stringIndex) * 1.8 + Math.abs(last.fret - cell.fret) * 0.55 : cell.fret * 0.1);
+          if (!winner || cost < winner.cost)
+            winner = { cost, notes: [...state.notes, { ...cell, ...nameFor(cell.midi) }] };
+        }
+        return winner;
+      }).filter(Boolean);
+      if (!states.length) break;
+    }
+    for (const state of states)
+      if (state.notes.length === targets.length && (!wholeNeck || ((_a = state.notes.at(-1)) == null ? void 0 : _a.stringIndex) === lastString) && (!best || state.cost < best.cost))
+        best = state;
+  }
+  return best ? applyArpeggioPattern(best.notes, step.pattern) : [];
+}
+function compileArpeggioProgression(document2, key = document2.key, tuning2 = document2.tuning) {
+  var _a;
+  const barTicks = meterQuarterBeats(document2.meter) * 480;
+  const pulse = ((_a = ARPEGGIO_RATES.find((item) => item.id === document2.rate)) == null ? void 0 : _a.ticks) ?? 240;
+  let startTick = 0, previousMidi = null;
+  const events = [], missing = [], paths = [], stepTicks = [];
+  for (const step of document2.steps) {
+    const path = buildArpeggioPath(
+      getArpeggioRoot(key, step),
+      step,
+      { ...document2, tuning: tuning2 },
+      document2.connect ? previousMidi : null
+    );
+    paths.push(path);
+    if (!path.length) missing.push(step.id);
+    const ticks = document2.runRange === "full-neck" ? Math.max(barTicks * step.bars, Math.ceil(path.length * pulse / barTicks) * barTicks) : barTicks * step.bars;
+    stepTicks.push(ticks);
+    if (path.length) {
+      for (let tick = 0, index = 0; tick < ticks && (document2.runRange !== "full-neck" || index < path.length); tick += pulse, index += 1) {
+        events.push({
+          ...path[index % path.length],
+          tick: startTick + tick,
+          duration: Math.min(Math.round(pulse * 0.82), ticks - tick),
+          stepId: step.id,
+          pathIndex: index % path.length
+        });
+      }
+      previousMidi = path.at(-1).midi;
+    }
+    startTick += ticks;
+  }
+  return { events, paths, missing, stepTicks, totalTicks: startTick };
+}
+function meterQuarterBeats(meter) {
+  const [numerator, denominator] = (ARPEGGIO_METERS.includes(meter) ? meter : "4/4").split("/").map(Number);
+  return numerator * 4 / denominator;
+}
+function chordConnection(fromRoot, fromQuality, toRoot, toQuality) {
+  const from = spellChordTones(fromRoot, fromQuality), to = spellChordTones(toRoot, toQuality);
+  const shared = from.filter((tone) => to.some((next) => next.pitch === tone.pitch)).map((tone) => tone.name);
+  let motion = null;
+  for (const tone of from)
+    for (const next of to) {
+      const distance = Math.min(
+        pitchClass$2(next.pitch - tone.pitch),
+        pitchClass$2(tone.pitch - next.pitch)
+      );
+      if (distance && (!motion || distance < motion.distance))
+        motion = { from: tone.name, to: next.name, distance };
+    }
+  return { shared, motion };
+}
+function arpeggioTab(document2, key = document2.key, tuning2 = document2.tuning, stepId = null) {
+  const compiled = compileArpeggioProgression(document2, key, tuning2);
+  if (compiled.missing.some((id) => stepId === null || id === stepId))
+    throw new Error("Widen the fret range before writing the complete tab.");
+  const instrument = getLearnTuning$1(tuning2);
+  const rate = ARPEGGIO_RATES.find((item) => item.id === document2.rate).name;
+  const lines = [
+    `CASSIAN | ${document2.name}`,
+    `${NOTE_NAMES$1[pitchClass$2(key)]} | ${instrument.name}`,
+    `${document2.tempo} quarter-note BPM | ${document2.meter} | ${rate}`,
+    stepId === null ? "Complete progression, in playback order. Repeat from the first chord when looping." : "Selected run, once through the complete picking pattern.",
+    "High string at the top. Numbers are frets. Every note is included.",
+    ""
+  ];
+  const selectedSteps = document2.steps.filter((step) => stepId === null || step.id === stepId);
+  if (!selectedSteps.length) throw new Error("Choose a chord before writing its tab.");
+  for (const step of selectedSteps) {
+    const index = document2.steps.findIndex((item) => item.id === step.id);
+    const notes = stepId === null ? compiled.events.filter((event) => event.stepId === step.id) : compiled.paths[index];
+    const bars = compiled.stepTicks[index] / (meterQuarterBeats(document2.meter) * 480);
+    lines.push(
+      `[${index + 1}] ${arpeggioName(key, step)} | ${bars} bars | ${notes.length} notes`,
+      ""
+    );
+    for (let start = 0; start < notes.length; start += 12) {
+      const group = notes.slice(start, start + 12);
+      lines.push("Note " + group.map((note) => (note.name + note.octave).padEnd(5)).join(""));
+      for (let string = instrument.notes.length - 1; string >= 0; string -= 1) {
+        const label2 = guitarStringLabel(
+          instrument.notes[string],
+          string === instrument.notes.length - 1
+        );
+        lines.push(
+          label2.padEnd(3) + "|" + group.map(
+            (note) => note.stringIndex === string ? ("--" + note.fret).padEnd(5, "-") : "-----"
+          ).join("") + "|"
+        );
+      }
+      lines.push("");
+    }
+  }
+  return lines.join("\n");
+}
+const variable = (value) => {
+  const bytes = [value & 127];
+  while (value >>= 7) bytes.unshift(value & 127 | 128);
+  return bytes;
+};
+const ascii = (text) => [...text].map((character) => character.charCodeAt(0));
+const uint32 = (value) => [
+  value >>> 24 & 255,
+  value >>> 16 & 255,
+  value >>> 8 & 255,
+  value & 255
+];
+function arpeggioMidi(document2, key = document2.key, tuning2 = document2.tuning) {
+  const compiled = compileArpeggioProgression(document2, key, tuning2);
+  if (compiled.missing.length)
+    throw new Error(
+      "Move the fret window or use more strings before exporting. Every chord needs a playable path."
+    );
+  const tempo = Math.round(6e7 / document2.tempo);
+  const [numerator, denominator] = document2.meter.split("/").map(Number);
+  const track = [
+    0,
+    255,
+    81,
+    3,
+    tempo >> 16 & 255,
+    tempo >> 8 & 255,
+    tempo & 255,
+    0,
+    255,
+    88,
+    4,
+    numerator,
+    Math.log2(denominator),
+    24,
+    8,
+    0,
+    192,
+    24
+  ];
+  const messages = compiled.events.flatMap((event) => [
+    { tick: event.tick, bytes: [144, event.midi, 82], order: 1 },
+    { tick: event.tick + event.duration, bytes: [128, event.midi, 0], order: 0 }
+  ]).sort((a, b) => a.tick - b.tick || a.order - b.order);
+  let lastTick = 0;
+  for (const message of messages) {
+    track.push(...variable(message.tick - lastTick), ...message.bytes);
+    lastTick = message.tick;
+  }
+  track.push(...variable(compiled.totalTicks - lastTick), 255, 47, 0);
+  return new Uint8Array([
+    ...ascii("MThd"),
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    1,
+    1,
+    224,
+    ...ascii("MTrk"),
+    ...uint32(track.length),
+    ...track
+  ]);
+}
+function ArpeggioNeck({
+  view = "both",
+  overview = false,
+  path,
+  tuning: tuning2,
+  minFret,
+  maxFret,
+  leftHanded,
+  active,
+  onPlayNote
+}) {
+  const instrument = getLearnTuning$1(tuning2);
+  const neckScroll = reactExports.useRef(null), tabScroll = reactExports.useRef(null);
+  const width = overview ? 1100 : Math.max(440, (maxFret - minFret + 1) * 58 + 100), height = instrument.notes.length * 36 + 76;
+  const x = (fret) => {
+    const right = 70 + (fret - minFret) * (width - 140) / (maxFret - minFret);
+    return leftHanded ? width - right : right;
+  };
+  const y = (stringIndex) => 58 + (instrument.notes.length - 1 - stringIndex) * 36;
+  const unique = [
+    ...new Map(path.map((note) => [note.stringIndex + ":" + note.fret, note])).values()
+  ];
+  reactExports.useEffect(() => {
+    var _a, _b;
+    if (!active) return;
+    const neck = neckScroll.current;
+    if (neck && !overview) {
+      const svg = neck.querySelector("svg");
+      const right = 70 + (active.fret - minFret) * (width - 140) / (maxFret - minFret);
+      const target = (leftHanded ? width - right : right) * svg.getBoundingClientRect().width / width;
+      if (target < neck.scrollLeft + 30 || target > neck.scrollLeft + neck.clientWidth - 30)
+        (_a = neck.scrollTo) == null ? void 0 : _a.call(neck, { left: Math.max(0, target - neck.clientWidth / 2), behavior: "auto" });
+    }
+    const tab = tabScroll.current;
+    const cell = tab == null ? void 0 : tab.querySelector(`[data-run-index="${active.pathIndex}"]`);
+    if (cell) {
+      const target = cell.getBoundingClientRect().left - tab.getBoundingClientRect().left + tab.scrollLeft;
+      if (target < tab.scrollLeft + 70 || target > tab.scrollLeft + tab.clientWidth - 35)
+        (_b = tab.scrollTo) == null ? void 0 : _b.call(tab, { left: Math.max(0, target - tab.clientWidth / 2), behavior: "auto" });
+    }
+  }, [active, minFret, maxFret, width, leftHanded, view, overview]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+    view !== "tab" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "div",
+      {
+        className: "arp-neck-scroll" + (overview ? " is-overview" : ""),
+        ref: neckScroll,
+        tabIndex: 0,
+        role: "region",
+        "aria-label": overview ? "Complete arpeggio fretboard, all frets visible" : "Arpeggio fretboard, scroll horizontally",
+        children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "svg",
+          {
+            className: "arp-neck",
+            style: { minWidth: overview ? 0 : width },
+            viewBox: `0 0 ${width} ${height}`,
+            role: "group",
+            "aria-label": `${leftHanded ? "Left" : "Right"}-handed arpeggio fretboard, ${instrument.name}`,
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "rect",
+                {
+                  className: "arp-neck-wood",
+                  x: "36",
+                  y: "34",
+                  width: width - 72,
+                  height: height - 72,
+                  rx: "5"
+                }
+              ),
+              Array.from({ length: maxFret - minFret + 1 }, (_, index) => {
+                const fret = minFret + index;
+                return /* @__PURE__ */ jsxRuntimeExports.jsxs("g", { "aria-hidden": "true", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "line",
+                    {
+                      className: "arp-fret-wire",
+                      x1: x(fret) + (leftHanded ? -23 : 23),
+                      x2: x(fret) + (leftHanded ? -23 : 23),
+                      y1: "34",
+                      y2: height - 38
+                    }
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("text", { className: "arp-fret-number", x: x(fret), y: "20", textAnchor: "middle", children: fret === 0 ? "OPEN" : fret })
+                ] }, fret);
+              }),
+              instrument.notes.map((note, index) => /* @__PURE__ */ jsxRuntimeExports.jsxs("g", { "aria-hidden": "true", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "line",
+                  {
+                    className: "arp-string",
+                    x1: "36",
+                    x2: width - 36,
+                    y1: y(index),
+                    y2: y(index),
+                    strokeWidth: 2.5 - index * 0.2
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "text",
+                  {
+                    className: "arp-fret-number arp-string-label",
+                    x: leftHanded ? width - 16 : 16,
+                    y: y(index) + 5,
+                    textAnchor: "middle",
+                    children: guitarStringLabel(note, index === instrument.notes.length - 1)
+                  }
+                )
+              ] }, index)),
+              unique.map((note) => {
+                const lit = (active == null ? void 0 : active.stringIndex) === note.stringIndex && (active == null ? void 0 : active.fret) === note.fret;
+                const play = () => onPlayNote(note);
+                return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "g",
+                  {
+                    role: "button",
+                    tabIndex: 0,
+                    "aria-label": `Hear ${note.name}${note.octave}, string ${instrument.notes.length - note.stringIndex}, fret ${note.fret}`,
+                    "data-fret": note.fret,
+                    "data-string": note.stringIndex,
+                    "data-x": x(note.fret),
+                    className: `arp-neck-note${note.degree === "1" ? " is-root" : ""}${lit ? " is-playing" : ""}`,
+                    transform: `translate(${x(note.fret)},${y(note.stringIndex)})`,
+                    onClick: play,
+                    onKeyDown: (event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        play();
+                      }
+                    },
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { r: "18" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("text", { y: "-1", textAnchor: "middle", children: note.name }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("text", { className: "arp-note-degree", y: "12", textAnchor: "middle", children: note.degree === "1" ? "R" : note.degree })
+                    ]
+                  },
+                  note.stringIndex + ":" + note.fret
+                );
+              })
+            ]
+          }
+        )
+      }
+    ),
+    !!path.length && view !== "neck" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "div",
+      {
+        className: "arp-tab-scroll",
+        ref: tabScroll,
+        tabIndex: 0,
+        role: "region",
+        "aria-label": "Arpeggio tablature, scroll horizontally",
+        children: /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { className: "arp-tab", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("caption", { children: [
+            "Play in order · high string at the top",
+            leftHanded ? " · the neck is mirrored; tab reads normally" : ""
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("th", { scope: "col", children: "Note" }),
+            path.map((note, index) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "th",
+              {
+                scope: "col",
+                "data-run-index": index,
+                className: (active == null ? void 0 : active.pathIndex) === index ? "is-playing" : "",
+                children: [
+                  index + 1,
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("small", { children: [
+                    note.name,
+                    note.octave
+                  ] })
+                ]
+              },
+              index
+            ))
+          ] }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: [...instrument.notes].reverse().map((open2, row) => {
+            const stringIndex = instrument.notes.length - 1 - row;
+            return /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("th", { scope: "row", children: midiNoteName$1(open2) }),
+              path.map((note, index) => /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: (active == null ? void 0 : active.pathIndex) === index ? "is-playing" : "", children: note.stringIndex === stringIndex ? /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: note.fret }) : "—" }, index))
+            ] }, stringIndex);
+          }) })
+        ] })
+      }
+    )
+  ] });
+}
+const routines = [
+  [
+    "01",
+    "Triads before speed",
+    "Major · minor · diminished · augmented",
+    "Start at 60 BPM with quarter notes. Say root, third and fifth as you pick. Use one string set, then repeat in another position. Aim for clean separation before adding speed."
+  ],
+  [
+    "02",
+    "Own the inversions",
+    "Root · third · fifth · seventh",
+    "Keep one chord and change its starting tone. Sing the bass note, then play ascending and descending. An inversion changes the starting note; the chord root stays the same."
+  ],
+  [
+    "03",
+    "Follow the changes",
+    "ii–V–I · guide tones",
+    "Use the extended ii–V–I template. Identify each third and seventh, then land on one when the chord changes. Hold a shared tone across the change before trying a busier line."
+  ],
+  [
+    "04",
+    "Picking and phrasing",
+    "Alternate · legato · sweep",
+    "Start with alternate picking and relaxed hands. Try legato where notes share a string. Sweep only on adjacent strings, muting the string you leave; generated routes are not automatic sweep fingerings. Leave rests and finish on a chord tone."
+  ],
+  [
+    "05",
+    "Practise the rhythm",
+    "Straight · triplets · odd bars",
+    "Keep quarter-note BPM steady while changing subdivisions. In 3/4 count three quarters; in 6/8 try two groups of three eighths. Group 5/4 as 3+2 and 7/8 as 2+2+3. Accent a group, then move the accent."
+  ],
+  [
+    "06",
+    "Make a musical line",
+    "Chord tones · approach notes · space",
+    "Learn the arpeggio first, then connect two chord tones with one nearby scale note. Resolve that passing note deliberately. Practise short phrases with a held note and a rest instead of continuous runs."
+  ]
+];
+function ArpeggioFoundations({ root, onAddChord, onHear, stop, disabled }) {
+  const formId = reactExports.useId();
+  const [scale, setScale] = reactExports.useState("major"), [sevenths, setSevenths] = reactExports.useState(true);
+  const [question, setQuestion] = reactExports.useState(null), [answer, setAnswer] = reactExports.useState(null), [direction, setDirection] = reactExports.useState("up");
+  const nextQuestion = () => {
+    stop();
+    const random = new Uint32Array(2);
+    crypto.getRandomValues(random);
+    setQuestion({ interval: random[0] % 13, base: 48 + root + random[1] % 2 * 12 });
+    setAnswer(null);
+  };
+  const hear = () => {
+    if (!question) return;
+    const interval = INTERVAL_STUDIES[question.interval][2] * (direction === "down" ? -1 : 1);
+    onHear(
+      [
+        { midi: question.base, tick: 0, duration: 380 },
+        { midi: question.base + interval, tick: 480, duration: 680 }
+      ],
+      { tempo: 80, totalTicks: 1200 }
+    );
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "arp-panel", "aria-label": "Arpeggio practice routines", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-heading", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "arp-eyebrow", children: "BUILD A PRACTICE HABIT" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "From shapes to music." })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Short, focused studies for the notes you just built." })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "arp-routines", children: routines.map(([number, name, subtitle, text]) => /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("summary", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("b", { children: number }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+            name,
+            /* @__PURE__ */ jsxRuntimeExports.jsx("small", { children: subtitle })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: text })
+      ] }, number)) })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "arp-panel", "aria-label": "Scale harmonization", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-heading", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "arp-eyebrow", children: "CHORDS THAT BELONG TOGETHER" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Build from a scale." })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Stack alternate scale notes to find the triads and sevenths in your lesson key." })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-controls", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-1`, children: [
+          "Harmony scale",
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "select",
+            {
+              id: `${formId}-field-1`,
+              value: scale,
+              onChange: (event) => setScale(event.target.value),
+              children: HARMONY_SCALES.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: item.id, children: item.name }, item.id))
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-2`, children: [
+          "Chord depth",
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "select",
+            {
+              id: `${formId}-field-2`,
+              value: sevenths ? "7" : "3",
+              onChange: (event) => setSevenths(event.target.value === "7"),
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "3", children: "Triads" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "7", children: "Seventh chords" })
+              ]
+            }
+          )
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "arp-harmony", children: harmonizeArpeggios(scale, sevenths).map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
+        {
+          type: "button",
+          disabled: disabled || !item.quality,
+          onClick: () => onAddChord(item),
+          "aria-label": `Add degree ${item.degree}, ${arpeggioName(root, item)}`,
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("small", { children: [
+              "DEGREE ",
+              item.degree
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: arpeggioName(root, item) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "+ Add chord" })
+          ]
+        },
+        item.degree
+      )) }),
+      scale === "melodic-minor" && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "arp-note", children: "This is ascending melodic minor, also used as a fixed jazz scale. Classical descending melodic minor uses natural minor." })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-reference-grid", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "arp-panel", "aria-label": "Interval ear trainer", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "arp-eyebrow", children: "HEAR THE DISTANCE" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Train your ear." }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Choose a challenge, listen, then name the interval. Sing it back before checking." }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-3`, children: [
+          "Interval direction",
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "select",
+            {
+              id: `${formId}-field-3`,
+              value: direction,
+              onChange: (event) => {
+                stop();
+                setDirection(event.target.value);
+                setAnswer(null);
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "up", children: "Ascending" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "down", children: "Descending" })
+              ]
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-actions", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: nextQuestion, children: "New interval" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: hear, disabled: !question, children: "Hear interval" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "arp-interval-answers", role: "group", "aria-label": "Interval answers", children: INTERVAL_STUDIES.map(([name, degree], index) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            type: "button",
+            disabled: !question,
+            "aria-pressed": answer === index,
+            onClick: () => setAnswer(index),
+            children: [
+              degree,
+              /* @__PURE__ */ jsxRuntimeExports.jsx("small", { children: name })
+            ]
+          },
+          name
+        )) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "arp-feedback", role: "status", children: answer === null ? question ? "Ready when you are. Hear the interval as often as you need." : "Press New interval to begin. Audio starts only when you press Hear." : answer === question.interval ? `Correct · ${INTERVAL_STUDIES[question.interval][0]}. ${INTERVAL_STUDIES[question.interval][2]} semitones.` : "Try again. Compare the distance between the two notes." }),
+        question && answer !== null && answer !== question.interval && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => setAnswer(question.interval), children: "Reveal answer" })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "arp-panel", "aria-label": "Music theory reference", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "arp-eyebrow", children: "THE ESSENTIALS" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Understand the notes." }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { open: true, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: "What makes an arpeggio?" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "A chord played one note at a time. A triad has a root, third and fifth. Sevenths add another chord tone; ninths, elevenths and thirteenths add colour. A ninth is a second an octave higher; this builder folds extensions into the chosen register for playable studies." })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: "Intervals and chord construction" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "arp-theory-table", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("caption", { children: "Semitone distances from the root" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("th", { children: "Interval" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("th", { children: "Semitones" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("th", { children: "Use" })
+            ] }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: INTERVAL_STUDIES.map(([name, degree, semitones, use]) => /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("th", { scope: "row", children: [
+                name,
+                " · ",
+                degree
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("td", { children: semitones }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("td", { children: use })
+            ] }, name)) })
+          ] }) })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("summary", { children: [
+            "Chord formula library · ",
+            ARPEGGIO_QUALITIES.length,
+            " types"
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "arp-formula-library", children: ARPEGGIO_QUALITIES.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: item.name }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: item.degrees.join(" · ") })
+          ] }, item.id)) })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: "Rhythm, inversions and voice leading" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "All tempos here count quarter notes. Eighths divide a quarter into two, triplets into three and sixteenths into four. An inversion begins on another chord tone. Voice leading connects nearby tones between chords; shared tones and the nearest movement appear beside your selected chord." })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: "Tab, tuning and handedness" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Tab keeps the highest string at the top. Numbers are fret numbers, not fingers. Left-handed mode mirrors the neck without changing pitches or tab order. Changing tuning recalculates every path; a fingering from standard tuning is never copied into another tuning." })
+        ] })
+      ] })
+    ] })
+  ] });
+}
+function createArpeggioPlayer({
+  AudioContextClass,
+  onEvent = () => {
+  },
+  onStarted = () => {
+  },
+  onComplete = () => {
+  },
+  onError = () => {
+  }
+}) {
+  let session = null, generation = 0;
+  const stop = () => {
+    generation += 1;
+    if (!session) return;
+    const old = session;
+    session = null;
+    clearInterval(old.timer);
+    for (const timer of old.uiTimers) clearTimeout(timer);
+    for (const node of old.nodes) {
+      try {
+        node.osc.stop();
+      } catch {
+      }
+      node.osc.disconnect();
+      node.gain.disconnect();
+    }
+    old.nodes.clear();
+    old.master.disconnect();
+    Promise.resolve(old.context.close()).catch(() => {
+    });
+  };
+  const setVolume = (volume) => {
+    if (session)
+      session.master.gain.setTargetAtTime(
+        Math.max(0, Math.min(100, volume)) / 100,
+        session.context.currentTime,
+        0.02
+      );
+  };
+  const start = async (events, { tempo = 90, totalTicks, loop = false, volume = 75 } = {}) => {
+    stop();
+    const token = generation;
+    if (!AudioContextClass)
+      throw new Error(
+        "Reference audio is unavailable here. You can still use the fretboard, tab and MIDI file."
+      );
+    if (!events.length || events.length > 8192 || !Number.isFinite(totalTicks) || totalTicks <= 0)
+      throw new Error("Choose a playable arpeggio first.");
+    const context = new AudioContextClass();
+    const master = context.createGain();
+    master.gain.setValueAtTime(Math.max(0, Math.min(100, volume)) / 100, context.currentTime);
+    master.connect(context.destination);
+    const current = { context, master, nodes: /* @__PURE__ */ new Set(), uiTimers: /* @__PURE__ */ new Set(), timer: null };
+    session = current;
+    try {
+      if (context.state === "suspended") await context.resume();
+      if (token !== generation) return;
+      const secondsPerTick = 60 / Math.min(240, Math.max(40, tempo)) / 480;
+      const length = totalTicks * secondsPerTick;
+      let origin = context.currentTime + 0.06, index = 0;
+      const tick = () => {
+        if (session !== current) return;
+        try {
+          const horizon = context.currentTime + 0.15;
+          while (true) {
+            if (index === events.length) {
+              if (!loop || origin + length >= horizon) break;
+              origin = origin + length < context.currentTime - 0.06 ? context.currentTime + 0.06 : origin + length;
+              index = 0;
+            }
+            if (origin + events[index].tick * secondsPerTick >= horizon) break;
+            const event = events[index++];
+            const scheduled = origin + event.tick * secondsPerTick;
+            if (scheduled < context.currentTime - 0.06) continue;
+            const when = Math.max(context.currentTime, scheduled);
+            const duration = Math.max(0.035, event.duration * secondsPerTick);
+            const osc = context.createOscillator(), gain = context.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(440 * 2 ** ((event.midi - 69) / 12), when);
+            gain.gain.setValueAtTime(0, when);
+            gain.gain.linearRampToValueAtTime(0.16, when + 6e-3);
+            gain.gain.exponentialRampToValueAtTime(1e-4, when + duration);
+            osc.connect(gain);
+            gain.connect(master);
+            const node = { osc, gain };
+            current.nodes.add(node);
+            osc.onended = () => {
+              current.nodes.delete(node);
+              osc.disconnect();
+              gain.disconnect();
+            };
+            osc.start(when);
+            osc.stop(when + duration + 0.01);
+            const uiTimer = setTimeout(
+              () => {
+                current.uiTimers.delete(uiTimer);
+                if (session === current) onEvent(event);
+              },
+              Math.max(0, (when - context.currentTime) * 1e3)
+            );
+            current.uiTimers.add(uiTimer);
+          }
+          if (!loop && index === events.length && context.currentTime >= origin + length) {
+            stop();
+            onComplete();
+          }
+        } catch (error) {
+          stop();
+          onError(error);
+        }
+      };
+      current.timer = setInterval(tick, 25);
+      onStarted();
+      tick();
+    } catch (error) {
+      if (session === current) {
+        stop();
+        throw error;
+      }
+    }
+  };
+  return { start, stop, setVolume };
+}
+function useArpeggioPreview(modelKey, { volume = 75, nativeStatus } = {}) {
+  const [playing, setPlaying] = reactExports.useState(false), [active, setActive] = reactExports.useState(null), [error, setError] = reactExports.useState("");
+  const player = reactExports.useRef(null), alive = reactExports.useRef(false);
+  const stop = reactExports.useCallback(() => {
+    var _a;
+    (_a = player.current) == null ? void 0 : _a.stop();
+    if (alive.current) {
+      setPlaying(false);
+      setActive(null);
+    }
+  }, []);
+  reactExports.useEffect(() => {
+    alive.current = true;
+    const hide = () => {
+      if (document.hidden) stop();
+    };
+    document.addEventListener("visibilitychange", hide);
+    window.addEventListener("blur", stop);
+    return () => {
+      var _a;
+      alive.current = false;
+      (_a = player.current) == null ? void 0 : _a.stop();
+      document.removeEventListener("visibilitychange", hide);
+      window.removeEventListener("blur", stop);
+    };
+  }, [stop]);
+  reactExports.useEffect(() => {
+    stop();
+  }, [modelKey, stop]);
+  reactExports.useEffect(() => {
+    var _a, _b;
+    (_b = (_a = player.current) == null ? void 0 : _a.updateStatus) == null ? void 0 : _b.call(_a, nativeStatus);
+  }, [nativeStatus]);
+  reactExports.useEffect(() => {
+    var _a, _b;
+    const result = (_b = (_a = player.current) == null ? void 0 : _a.setVolume) == null ? void 0 : _b.call(_a, volume);
+    if (result == null ? void 0 : result.catch) result.catch(() => {
+    });
+  }, [volume]);
+  const play = async (events, options) => {
+    var _a;
+    setError("");
+    (_a = player.current) == null ? void 0 : _a.stop();
+    const factory = createArpeggioPlayer;
+    player.current = factory({
+      AudioContextClass: window.AudioContext || window.webkitAudioContext,
+      onEvent: (event) => {
+        if (alive.current) setActive(event);
+      },
+      onStarted: () => {
+        if (alive.current) setPlaying(true);
+      },
+      onComplete: () => {
+        if (alive.current) setPlaying(false);
+      },
+      onError: (failure) => {
+        if (alive.current) {
+          setError(failure.message);
+          setPlaying(false);
+          setActive(null);
+        }
+      }
+    });
+    try {
+      await player.current.start(events, { ...options, volume });
+    } catch (failure) {
+      if (alive.current) {
+        setError(failure.message);
+        setPlaying(false);
+        setActive(null);
+      }
+    }
+  };
+  return { playing, active, error, play, stop };
+}
+const native = false;
+function ArpeggioBandSend() {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "arp-note", children: "Play with Band in Cassian for Windows. Export your progression below, then import it in the desktop Arpeggio workshop." });
+}
+function readLibrary() {
+  try {
+    const raw = localStorage.getItem(ARPEGGIO_STORAGE_KEY);
+    if (!raw || raw.length > 131072) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length <= 12 ? parsed.map(normalizeArpeggioProgression) : [];
+  } catch {
+    return [];
+  }
+}
+function download(data, type, name) {
+  const url = URL.createObjectURL(new Blob([data], { type }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1e3);
+}
+function ArpeggioBuilder({
+  leftHanded: preferredLeftHanded,
+  onLeftHandedChange,
+  root = 4,
+  tuning: tuning2 = "standard",
+  onRootChange,
+  onTuningChange,
+  status = {},
+  onNavigate,
+  onError,
+  onBusyChange
+}) {
+  var _a;
+  const formId = reactExports.useId();
+  const [draft, setDraft] = useRetainedState("learn-arpeggios", "draft", createArpeggioProgression);
+  const [tempoText, setTempoText] = reactExports.useState(null);
+  const [selectedId, setSelectedId] = useRetainedState("learn-arpeggios", "selected", 1);
+  const [leftHanded, setLeftHanded] = useRetainedState("learn-neck", "left-handed", false);
+  reactExports.useEffect(() => {
+    if (preferredLeftHanded !== void 0) setLeftHanded(preferredLeftHanded);
+  }, [preferredLeftHanded, setLeftHanded]);
+  const [loop, setLoop] = useRetainedState("learn-arpeggios", "loop", true);
+  const [studyView, setStudyView] = useRetainedState("learn-arpeggios", "study-view", "neck");
+  const [sequence, setSequence] = useRetainedState("learn-arpeggios", "sequence", "");
+  const [sequenceError, setSequenceError] = reactExports.useState(""), [playScope, setPlayScope] = reactExports.useState(null);
+  const [template, setTemplate] = reactExports.useState("metal-minor"), [genre, setGenre] = reactExports.useState("Metal");
+  const [composerMode, setComposerMode] = reactExports.useState("sequence"), [resetRequested, setResetRequested] = reactExports.useState(false);
+  const [bandSending, setBandSending] = reactExports.useState(false), [resetEpoch, setResetEpoch] = reactExports.useState(0);
+  const handleBandBusy = reactExports.useCallback(
+    (busy) => {
+      setBandSending(busy);
+      onBusyChange == null ? void 0 : onBusyChange(busy);
+    },
+    [onBusyChange]
+  );
+  const [library, setLibrary] = reactExports.useState(readLibrary), [savedChoice, setSavedChoice] = reactExports.useState("");
+  const [feedback, setFeedback] = reactExports.useState(""), [pendingLoad, setPendingLoad] = reactExports.useState(null);
+  const fileInput = reactExports.useRef(null);
+  const studyPane = reactExports.useRef(null), previousKey = reactExports.useRef(root), previousRange = reactExports.useRef(draft.runRange);
+  const focusStudy = reactExports.useCallback(() => {
+    var _a2;
+    const pane = studyPane.current;
+    const target = (pane == null ? void 0 : pane.classList.contains("is-full-neck")) ? pane.querySelector(".arp-neck-panel") : pane;
+    (_a2 = target == null ? void 0 : target.scrollIntoView) == null ? void 0 : _a2.call(target, { block: "start", behavior: "auto" });
+  }, []);
+  reactExports.useEffect(() => {
+    if (previousKey.current !== root || previousRange.current !== draft.runRange) {
+      previousKey.current = root;
+      previousRange.current = draft.runRange;
+      focusStudy();
+    }
+  }, [root, draft.runRange, focusStudy]);
+  const [previewVolume, setPreviewVolume] = useRetainedState("learn-arpeggios", "volume", 75);
+  const modelKey = JSON.stringify([draft, root, tuning2]);
+  const preview = useArpeggioPreview(modelKey, {
+    volume: previewVolume,
+    nativeStatus: status.learnPreview
+  });
+  const compiled = reactExports.useMemo(
+    () => compileArpeggioProgression(draft, root, tuning2),
+    [draft, root, tuning2]
+  );
+  const studyStep = playScope === "progression" ? draft.steps.findIndex((step) => {
+    var _a2;
+    return step.id === ((_a2 = preview.active) == null ? void 0 : _a2.stepId);
+  }) : -1;
+  const playingStep = preview.playing ? studyStep : -1;
+  const selectedIndex = Math.max(
+    0,
+    studyStep >= 0 ? studyStep : draft.steps.findIndex((step) => step.id === selectedId)
+  );
+  const selected = draft.steps[selectedIndex], chordRoot = getArpeggioRoot(root, selected);
+  const selectedQuality = getArpeggioQuality(selected.quality), selectedPath = compiled.paths[selectedIndex];
+  const progressionTab = reactExports.useMemo(
+    () => compiled.missing.length ? "Widen the fret range so every chord has a complete run." : arpeggioTab(draft, root, tuning2),
+    [compiled, draft, root, tuning2]
+  );
+  const next = draft.steps[(selectedIndex + 1) % draft.steps.length];
+  const connection = chordConnection(
+    chordRoot,
+    selected.quality,
+    getArpeggioRoot(root, next),
+    next.quality
+  );
+  const chordTones = spellChordTones(chordRoot, selected.quality);
+  const atLimit = draft.steps.length >= MAX_ARPEGGIO_STEPS;
+  const saveName = draft.name.trim() || "My progression";
+  const fileName = saveName.replace(/[^a-z0-9_-]+/gi, "-").slice(0, 70);
+  const pulse = ARPEGGIO_RATES.find((item) => item.id === draft.rate).ticks;
+  const genreTemplates = ARPEGGIO_TEMPLATES.filter((item) => item.genre === genre);
+  const chosenTemplate = ARPEGGIO_TEMPLATES.find((item) => item.id === template) ?? genreTemplates[0];
+  const stepBars = (index) => compiled.stepTicks[index] / (meterQuarterBeats(draft.meter) * 480);
+  const playReference = (events, options, scope = "single") => {
+    if (scope !== "progression") setSelectedId(selected.id);
+    setPlayScope(scope);
+    if (draft.runRange === "full-neck") focusStudy();
+    preview.play(events, options);
+  };
+  const update = (changes) => {
+    preview.stop();
+    setDraft((current) => ({ ...current, ...changes }));
+    setFeedback("Draft changed. Save it to keep it after closing Cassian.");
+  };
+  const updateStep = (changes) => {
+    update({
+      steps: draft.steps.map((step) => step.id === selected.id ? { ...step, ...changes } : step)
+    });
+    focusStudy();
+  };
+  const applyChordSequence = (append = false) => {
+    try {
+      const steps = parseArpeggioSequence(sequence, root, draft.nextId).map(
+        (step) => draft.runRange === "full-neck" ? { ...step, pattern: "up" } : step
+      );
+      if (steps.length + (append ? draft.steps.length : 0) > MAX_ARPEGGIO_STEPS)
+        throw new Error("Keep the complete progression within 32 chords.");
+      const name = !append && ARPEGGIO_TEMPLATES.some((item) => item.name === draft.name) ? steps.map((step) => arpeggioName(root, step)).join(" – ").slice(0, 80) : draft.name;
+      update({
+        name,
+        steps: append ? [...draft.steps, ...steps] : steps,
+        nextId: draft.nextId + steps.length
+      });
+      setSelectedId(steps[0].id);
+      setSequenceError("");
+      focusStudy();
+      setFeedback("Sequence ready. Play progression follows every card from left to right.");
+    } catch (error) {
+      setSequenceError(error.message);
+    }
+  };
+  const applyGenreProgression = () => {
+    const preset = createArpeggioProgression(chosenTemplate.id);
+    const steps = preset.steps.map((step, index) => ({
+      ...step,
+      id: draft.nextId + index,
+      pattern: draft.runRange === "full-neck" ? "up" : step.pattern
+    }));
+    update({ name: preset.name, steps, nextId: draft.nextId + steps.length });
+    setSelectedId(steps[0].id);
+    focusStudy();
+    setSequenceError("");
+    setFeedback(
+      `${genre} · ${chosenTemplate.name} is ready in ${NOTE_NAMES$1[root]}. Play it through or edit any chord.`
+    );
+  };
+  const resetDefaults = () => {
+    preview.stop();
+    const fresh = createArpeggioProgression();
+    setDraft(fresh);
+    setSelectedId(fresh.steps[0].id);
+    onRootChange == null ? void 0 : onRootChange(fresh.key);
+    onTuningChange == null ? void 0 : onTuningChange(fresh.tuning);
+    setLoop(true);
+    setPreviewVolume(75);
+    setStudyView("neck");
+    focusStudy();
+    setSequence("");
+    setSequenceError("");
+    setPlayScope(null);
+    setTemplate("metal-minor");
+    setGenre("Metal");
+    setComposerMode("sequence");
+    setPendingLoad(null);
+    setResetRequested(false);
+    setResetEpoch((value) => value + 1);
+    setFeedback(
+      "Workshop defaults restored. Your saved progressions and handedness are preserved."
+    );
+  };
+  const stayInArea = () => {
+    const minFret = Math.min(19, draft.minFret);
+    update({ runRange: "octaves", minFret, maxFret: minFret + 5 });
+    focusStudy();
+  };
+  const writeWholeNeckRun = () => {
+    update({
+      runRange: "full-neck",
+      minFret: 0,
+      maxFret: 24,
+      strings: "all",
+      steps: draft.steps.map((step) => ({ ...step, pattern: "up" }))
+    });
+    setStudyView("neck");
+    focusStudy();
+    setFeedback(
+      "Whole-neck run plays once to the last string. Choose Up & down for a return trip."
+    );
+    setLoop(false);
+  };
+  const addChord = (chord = { offset: 0, quality: "major" }) => {
+    if (atLimit) return;
+    const item = { inversion: 0, bars: 1, pattern: "up-down", ...chord, id: draft.nextId };
+    const steps = [...draft.steps];
+    steps.splice(selectedIndex + 1, 0, item);
+    update({ steps, nextId: draft.nextId + 1 });
+    setSelectedId(item.id);
+  };
+  const removeChord = () => {
+    if (draft.steps.length <= 1) return;
+    update({ steps: draft.steps.filter((step) => step.id !== selected.id) });
+    setSelectedId(draft.steps[Math.max(0, selectedIndex - 1)].id);
+  };
+  const moveChord = (direction) => {
+    const target = selectedIndex + direction;
+    if (target < 0 || target >= draft.steps.length) return;
+    const steps = [...draft.steps];
+    [steps[selectedIndex], steps[target]] = [steps[target], steps[selectedIndex]];
+    update({ steps });
+  };
+  const applyLoad = () => {
+    preview.stop();
+    const loaded = normalizeArpeggioProgression(pendingLoad);
+    setDraft(loaded);
+    setSelectedId(loaded.steps[0].id);
+    onRootChange == null ? void 0 : onRootChange(loaded.key);
+    onTuningChange == null ? void 0 : onTuningChange(loaded.tuning);
+    setPendingLoad(null);
+    setFeedback(`Loaded ${loaded.name}.`);
+  };
+  const save = () => {
+    try {
+      const document2 = normalizeArpeggioProgression({
+        ...draft,
+        name: saveName,
+        key: root,
+        tuning: tuning2
+      });
+      const previous = library.findIndex((item) => item.name === saveName);
+      if (previous < 0 && library.length >= 12)
+        throw new Error(
+          "Your 12 save slots are full. Use an existing name or download a progression file."
+        );
+      const nextLibrary = previous < 0 ? [...library, document2] : library.map((item, index) => index === previous ? document2 : item);
+      localStorage.setItem(ARPEGGIO_STORAGE_KEY, JSON.stringify(nextLibrary));
+      setLibrary(nextLibrary);
+      setSavedChoice(saveName);
+      setFeedback(
+        `Saved ${saveName} on this device. Download a progression file for a portable copy.`
+      );
+    } catch (error) {
+      setFeedback(error.message || "Could not save here. Download a progression file instead.");
+    }
+  };
+  const importFile = async (event) => {
+    var _a2;
+    const file = (_a2 = event.target.files) == null ? void 0 : _a2[0];
+    if (!file) return;
+    try {
+      if (file.size > 131072) throw new Error("Choose a progression file smaller than 128 KB.");
+      setPendingLoad(normalizeArpeggioProgression(JSON.parse(await file.text())));
+    } catch (error) {
+      setFeedback(`Could not import this progression. ${error.message}`);
+    } finally {
+      event.target.value = "";
+    }
+  };
+  const exportFile = (kind) => {
+    try {
+      const document2 = normalizeArpeggioProgression({ ...draft, key: root, tuning: tuning2 });
+      if (kind === "midi") download(arpeggioMidi(document2), "audio/midi", `${fileName}.mid`);
+      else if (kind === "tab")
+        download(
+          arpeggioTab(
+            document2,
+            root,
+            tuning2,
+            studyView === "progression" ? null : document2.steps[selectedIndex].id
+          ),
+          "text/plain;charset=utf-8",
+          `${fileName}-tab.txt`
+        );
+      else
+        download(
+          JSON.stringify(document2, null, 2),
+          "application/json",
+          `${fileName}.cassian-arpeggios.json`
+        );
+      setFeedback(
+        kind === "tab" ? "Complete tablature prepared, including every note of the run and its return." : kind === "midi" ? "MIDI file prepared with the current notes, tempo and time signature." : "Portable progression file prepared. Import it here to continue editing."
+      );
+    } catch (error) {
+      setFeedback(error.message);
+    }
+  };
+  const hearChord = () => playReference(
+    selectedPath.map((note, index) => ({
+      ...note,
+      tick: index * pulse,
+      duration: pulse * 0.82,
+      stepId: selected.id,
+      pathIndex: index
+    })),
+    { tempo: draft.tempo, totalTicks: selectedPath.length * pulse }
+  );
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-workspace", inert: bandSending, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "arp-panel arp-sequence-panel", "aria-label": "Progression playback", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-heading", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "arp-eyebrow", children: "THE ARPEGGIO WORKSHOP" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: "Build a progression. Play it through." })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-source-tabs", role: "group", "aria-label": "Progression source", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              type: "button",
+              "aria-pressed": composerMode === "sequence",
+              onClick: () => setComposerMode("sequence"),
+              children: "Type chords"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              type: "button",
+              "aria-pressed": composerMode === "genre",
+              onClick: () => setComposerMode("genre"),
+              children: "Genre presets"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => {
+              preview.stop();
+              setResetRequested(true);
+            },
+            children: "Reset defaults"
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "arp-key-stamp", children: [
+          NOTE_NAMES$1[root],
+          " · ",
+          draft.steps.length,
+          " CHORDS · ",
+          draft.meter
+        ] })
+      ] }),
+      composerMode === "sequence" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-quick-sequence", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-sequence`, children: [
+          "Chord sequence",
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "input",
+            {
+              id: `${formId}-sequence`,
+              value: sequence,
+              maxLength: 256,
+              placeholder: "E C D B · or ECDB",
+              "aria-invalid": !!sequenceError,
+              "aria-describedby": `${formId}-sequence-help`,
+              onChange: (event) => {
+                setSequence(event.target.value);
+                setSequenceError("");
+              },
+              onKeyDown: (event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  applyChordSequence();
+                }
+              }
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => applyChordSequence(), disabled: !sequence.trim(), children: "Apply sequence" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => applyChordSequence(true),
+            disabled: !sequence.trim() || atLimit,
+            children: "Append sequence"
+          }
+        )
+      ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-quick-sequence arp-genre-picker", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-genre`, children: [
+          "Genre",
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "select",
+            {
+              id: `${formId}-genre`,
+              value: genre,
+              onChange: (event) => {
+                const next2 = event.target.value;
+                setGenre(next2);
+                setTemplate(ARPEGGIO_TEMPLATES.find((item) => item.genre === next2).id);
+              },
+              children: ARPEGGIO_GENRES.map((name) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { children: name }, name))
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-genre-template`, children: [
+          "Progression",
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "select",
+            {
+              id: `${formId}-genre-template`,
+              value: chosenTemplate.id,
+              onChange: (event) => setTemplate(event.target.value),
+              children: genreTemplates.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: item.id, children: item.name }, item.id))
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: applyGenreProgression, children: "Use progression" })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "arp-note", id: `${formId}-sequence-help`, children: composerMode === "sequence" ? "Use ECDB or Em7 Cmaj7 D B7. Apply replaces; Append adds." : [
+        `${genre} · ${genreTemplates.length} progressions · ${chosenTemplate.formula}.`,
+        "Loads in your current key; every chord is editable."
+      ].join(" ") }),
+      resetRequested && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "div",
+        {
+          className: "arp-reset-confirm arp-load-confirm",
+          role: "group",
+          "aria-label": "Reset workshop defaults",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Restore the starter progression, E key, Standard E tuning, 90 BPM, 4/4, one-octave studies and looping? Your saved progressions and left-handed preference stay." }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-actions", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => setResetRequested(false), children: "Cancel reset" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: resetDefaults, children: "Restore defaults" })
+            ] })
+          ]
+        }
+      ),
+      sequenceError && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "arp-warning", role: "alert", children: sequenceError }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("ol", { className: "arp-progression", "aria-label": "Arpeggio progression", children: draft.steps.map((step, index) => {
+        var _a2;
+        return /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            type: "button",
+            "aria-pressed": selected.id === step.id,
+            className: ((_a2 = preview.active) == null ? void 0 : _a2.stepId) === step.id ? "is-playing" : "",
+            onClick: () => {
+              preview.stop();
+              setSelectedId(step.id);
+              focusStudy();
+            },
+            "aria-label": `Edit chord ${index + 1}, ${arpeggioName(root, step)}`,
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                "CHORD ",
+                String(index + 1).padStart(2, "0")
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: arpeggioName(root, step) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("small", { children: [
+                stepBars(index),
+                " ",
+                stepBars(index) === 1 ? "bar" : "bars",
+                " ·",
+                " ",
+                getArpeggioQuality(step.quality).degrees[step.inversion],
+                " in bass"
+              ] })
+            ]
+          }
+        ) }, step.id);
+      }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "arp-order-tools", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: "Add, move or remove chords" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-actions", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => addChord(), disabled: atLimit, children: "+ Add chord" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => addChord(selected), disabled: atLimit, children: "Duplicate chord" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => moveChord(-1), disabled: selectedIndex === 0, children: "Move earlier" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              type: "button",
+              onClick: () => moveChord(1),
+              disabled: selectedIndex === draft.steps.length - 1,
+              children: "Move later"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: removeChord, disabled: draft.steps.length === 1, children: "Remove chord" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "arp-note", children: [
+            draft.steps.length,
+            " / 32 chords"
+          ] })
+        ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "div",
+      {
+        className: "arp-study-layout" + (draft.runRange === "full-neck" ? " is-full-neck" : ""),
+        ref: studyPane,
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "arp-panel arp-editor-panel", "aria-label": "Chord study controls", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "arp-heading", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "arp-eyebrow", children: "CHANGE IT. SEE IT." }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Shape the next chord." })
+            ] }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-chord-editor", role: "group", "aria-label": "Selected chord settings", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-study-key`, children: [
+                "Progression key",
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "select",
+                  {
+                    id: `${formId}-study-key`,
+                    value: root,
+                    onChange: (event) => {
+                      preview.stop();
+                      onRootChange == null ? void 0 : onRootChange(Number(event.target.value));
+                    },
+                    children: LEARN_KEYS$1.map((key) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: key.value, children: key.name }, key.value))
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-5`, children: [
+                "Chord root",
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "select",
+                  {
+                    id: `${formId}-field-5`,
+                    value: chordRoot,
+                    onChange: (event) => updateStep({ offset: pitchClass$2(Number(event.target.value) - root) }),
+                    children: LEARN_KEYS$1.map((key) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: key.value, children: key.name }, key.value))
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-6`, children: [
+                "Chord type",
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "select",
+                  {
+                    id: `${formId}-field-6`,
+                    value: selectedQuality.id,
+                    onChange: (event) => updateStep({ quality: event.target.value, inversion: 0 }),
+                    children: ARPEGGIO_QUALITIES.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: item.id, children: item.name }, item.id))
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-7`, children: [
+                "Starting tone / inversion",
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "select",
+                  {
+                    id: `${formId}-field-7`,
+                    value: selected.inversion,
+                    onChange: (event) => updateStep({ inversion: Number(event.target.value) }),
+                    children: chordTones.map((tone, index) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: index, children: [
+                      index === 0 ? "Root position" : index === 1 ? "First inversion" : index === 2 ? "Second inversion" : index === 3 ? "Third inversion" : "Start on " + tone.degree,
+                      " ",
+                      "· ",
+                      tone.name
+                    ] }, tone.degree))
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-8`, children: [
+                "Picking pattern",
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "select",
+                  {
+                    id: `${formId}-field-8`,
+                    value: selected.pattern,
+                    onChange: (event) => updateStep({ pattern: event.target.value }),
+                    children: ARPEGGIO_PATTERNS.map((pattern) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: pattern.id, children: pattern.name }, pattern.id))
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-9`, children: [
+                draft.runRange === "full-neck" ? "Minimum bars on this chord" : "Bars on this chord",
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "select",
+                  {
+                    id: `${formId}-field-9`,
+                    value: selected.bars,
+                    onChange: (event) => updateStep({ bars: Number(event.target.value) }),
+                    children: Array.from({ length: 8 }, (_, index) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: index + 1, children: index + 1 }, index))
+                  }
+                )
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "arp-harmony-details", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: "Chord tones & connections" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-tone-strip", "aria-label": "Selected chord tones", children: [
+                chordTones.map((tone) => /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("b", { children: tone.name }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("small", { children: tone.degree })
+                ] }, tone.degree)),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
+                  selectedQuality.name,
+                  " · ",
+                  selectedQuality.degrees.join(" – ")
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-connection", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("b", { children: [
+                  "Into ",
+                  arpeggioName(root, next)
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: connection.shared.length ? "Shared tones: " + connection.shared.join(" · ") : "No shared chord tones." }),
+                connection.motion && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                  "Try ",
+                  connection.motion.from,
+                  " → ",
+                  connection.motion.to,
+                  " ·",
+                  " ",
+                  connection.motion.distance,
+                  " ",
+                  connection.motion.distance === 1 ? "semitone" : "semitones"
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "arp-note", children: "The lesson key transposes the whole progression. Chord roots can move freely, including chords outside the key." })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "arp-timing-options", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: "Progression name & saved settings" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "arp-setup", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-1`, children: [
+                "Progression name",
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "input",
+                  {
+                    id: `${formId}-field-1`,
+                    maxLength: 80,
+                    value: draft.name,
+                    onChange: (event) => update({ name: event.target.value })
+                  }
+                )
+              ] }) })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "arp-panel arp-neck-panel", "aria-label": "Arpeggio fingering and playback", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-heading", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "arp-eyebrow", children: "PUT IT UNDER YOUR FINGERS" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { children: [
+                  arpeggioName(root, selected),
+                  " · the playable route"
+                ] })
+              ] }),
+              draft.runRange === "full-neck" && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: stayInArea, children: "Stay in this area" }),
+              draft.runRange === "full-neck" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => {
+                    var _a2, _b;
+                    return (_b = (_a2 = studyPane.current) == null ? void 0 : _a2.querySelector(".arp-editor-panel")) == null ? void 0 : _b.scrollIntoView({ block: "start" });
+                  },
+                  children: "Chord settings"
+                }
+              ),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "arp-check", htmlFor: `${formId}-field-10`, children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "input",
+                  {
+                    id: `${formId}-field-10`,
+                    type: "checkbox",
+                    checked: leftHanded,
+                    onChange: (event) => {
+                      setLeftHanded(event.target.checked);
+                      onLeftHandedChange == null ? void 0 : onLeftHandedChange(event.target.checked);
+                    }
+                  }
+                ),
+                "Left-handed view"
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "div",
+              {
+                className: "arp-playback-settings",
+                role: "group",
+                "aria-label": "Playback timing and volume",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-tempo-control", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      DraftDial,
+                      {
+                        label: "Tempo",
+                        caption: "Tempo",
+                        value: draft.tempo,
+                        min: 40,
+                        max: 240,
+                        step: 1,
+                        fineStep: 1,
+                        onChange: (tempo) => {
+                          setTempoText(null);
+                          update({ tempo });
+                        }
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "arp-tempo-field", htmlFor: `${formId}-field-2`, children: [
+                      "BPM",
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "input",
+                        {
+                          "aria-label": "Quarter-note BPM",
+                          id: `${formId}-field-2`,
+                          type: "number",
+                          className: "arp-bpm-input",
+                          min: 40,
+                          max: 240,
+                          value: tempoText ?? String(draft.tempo),
+                          onKeyDown: (event) => {
+                            if (event.key === "Enter") event.currentTarget.blur();
+                          },
+                          onChange: (event) => {
+                            setTempoText(event.target.value);
+                            if (event.target.value) {
+                              const tempo = Number(event.target.value);
+                              if (Number.isFinite(tempo) && tempo >= 40 && tempo <= 240) update({ tempo });
+                            }
+                          },
+                          onBlur: () => setTempoText(null)
+                        }
+                      )
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-3`, children: [
+                    "Time signature",
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "select",
+                      {
+                        id: `${formId}-field-3`,
+                        value: draft.meter,
+                        onChange: (event) => update({ meter: event.target.value }),
+                        children: ARPEGGIO_METERS.map((meter) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { children: meter }, meter))
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-4`, children: [
+                    "Note spacing",
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "select",
+                      {
+                        id: `${formId}-field-4`,
+                        value: draft.rate,
+                        onChange: (event) => update({ rate: event.target.value }),
+                        children: ARPEGGIO_RATES.map((rate) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: rate.id, children: rate.name }, rate.id))
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "arp-preview-volume", htmlFor: `${formId}-preview-volume`, children: [
+                    "Guitar volume · ",
+                    previewVolume,
+                    "%",
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "input",
+                      {
+                        id: `${formId}-preview-volume`,
+                        type: "range",
+                        min: "0",
+                        max: "100",
+                        value: previewVolume,
+                        onChange: (event) => setPreviewVolume(Number(event.target.value))
+                      }
+                    )
+                  ] })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-sequence-transport", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  className: "arp-primary",
+                  type: "button",
+                  disabled: !!compiled.missing.length,
+                  onClick: () => playReference(
+                    compiled.events,
+                    { tempo: draft.tempo, totalTicks: compiled.totalTicks, loop },
+                    "progression"
+                  ),
+                  children: "Play progression"
+                }
+              ),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: preview.stop, disabled: !preview.playing, children: "Stop progression" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "arp-check", htmlFor: `${formId}-loop-progression`, children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "input",
+                  {
+                    id: `${formId}-loop-progression`,
+                    type: "checkbox",
+                    checked: loop,
+                    onChange: (event) => {
+                      preview.stop();
+                      setLoop(event.target.checked);
+                    }
+                  }
+                ),
+                "Loop progression"
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { role: "status", "aria-label": "Progression playback status", children: preview.playing && playScope === "progression" ? playingStep >= 0 ? `Playing ${playingStep + 1}/${draft.steps.length} · ${arpeggioName(root, draft.steps[playingStep])}` : "Starting progression…" : studyStep >= 0 ? `Finished on ${arpeggioName(root, draft.steps[studyStep])}. Press Play to start again.` : `Plays left to right${loop ? ", then repeats from the first chord" : ", once through"}.` })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-study-view", role: "group", "aria-label": "Study display", children: [
+              [
+                ["neck", "Fretboard"],
+                ["tab", "Tablature"],
+                ["both", "Both"],
+                ["progression", "Progression tab"]
+              ].map(([id, label2]) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  "aria-pressed": studyView === id,
+                  onClick: () => setStudyView(id),
+                  children: label2
+                },
+                id
+              )),
+              draft.runRange !== "full-neck" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  "aria-pressed": draft.runRange !== "full-neck",
+                  onClick: stayInArea,
+                  children: "Stay in this area"
+                }
+              ),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  className: "arp-run-button",
+                  onClick: writeWholeNeckRun,
+                  "aria-pressed": draft.runRange === "full-neck",
+                  children: "Whole-neck run"
+                }
+              )
+            ] }),
+            draft.runRange !== "full-neck" && /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "arp-fret-area", htmlFor: `${formId}-fret-area`, children: [
+              "Fret area",
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "select",
+                {
+                  id: `${formId}-fret-area`,
+                  value: draft.maxFret - draft.minFret === 5 ? draft.minFret : "custom",
+                  onChange: (event) => {
+                    if (event.target.value === "custom") return;
+                    const minFret = Number(event.target.value);
+                    update({ minFret, maxFret: minFret + 5 });
+                    focusStudy();
+                  },
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: "custom", children: [
+                      "Custom · ",
+                      draft.minFret,
+                      "–",
+                      draft.maxFret
+                    ] }),
+                    Array.from({ length: 20 }, (_, fret) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: fret, children: [
+                      fret,
+                      "–",
+                      fret + 5
+                    ] }, fret))
+                  ]
+                }
+              )
+            ] }),
+            draft.runRange === "full-neck" && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "arp-note arp-run-summary", children: [
+              getLearnTuning$1(tuning2).notes.length,
+              " strings · frets ",
+              draft.minFret,
+              "–",
+              draft.maxFret,
+              " ",
+              "· ",
+              selectedPath.length,
+              " notes in this run. Each run plays once, then rests to the next chord. Choose Up & down for the return; looping is optional."
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "arp-neck-options", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: "Fret range, tuning & strings" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-controls", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-11`, children: [
+                  "Arpeggio tuning",
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "select",
+                    {
+                      id: `${formId}-field-11`,
+                      value: tuning2,
+                      onChange: (event) => {
+                        preview.stop();
+                        onTuningChange == null ? void 0 : onTuningChange(event.target.value);
+                      },
+                      children: LEARN_TUNINGS$1.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: item.id, children: item.name }, item.id))
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-12`, children: [
+                  "Lowest fret",
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "select",
+                    {
+                      id: `${formId}-field-12`,
+                      value: draft.minFret,
+                      onChange: (event) => {
+                        const minFret = Number(event.target.value);
+                        update({ minFret, maxFret: Math.max(draft.maxFret, minFret + 3) });
+                      },
+                      children: Array.from({ length: 20 }, (_, index) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { children: index }, index))
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-13`, children: [
+                  "Highest fret",
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "select",
+                    {
+                      id: `${formId}-field-13`,
+                      value: draft.maxFret,
+                      onChange: (event) => update({ maxFret: Number(event.target.value) }),
+                      children: Array.from({ length: 24 - draft.minFret - 2 }, (_, index) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { children: draft.minFret + 3 + index }, index))
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-14`, children: [
+                  "String set",
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "select",
+                    {
+                      id: `${formId}-field-14`,
+                      value: draft.strings,
+                      onChange: (event) => update({ strings: event.target.value }),
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "all", children: "All strings" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "upper3", children: "Upper 3 strings" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "upper4", children: "Upper 4 strings" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "lower4", children: "Lower 4 strings" })
+                      ]
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-15`, children: [
+                  "Range",
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "select",
+                    {
+                      id: `${formId}-field-15`,
+                      value: draft.runRange === "full-neck" ? "full-neck" : draft.octaves,
+                      onChange: (event) => event.target.value === "full-neck" ? writeWholeNeckRun() : update({ runRange: "octaves", octaves: Number(event.target.value) }),
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: 1, children: "One octave" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: 2, children: "Two octaves" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "full-neck", children: "Whole neck · all available octaves" })
+                      ]
+                    }
+                  )
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "arp-actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "arp-check", htmlFor: `${formId}-field-16`, children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "input",
+                  {
+                    id: `${formId}-field-16`,
+                    type: "checkbox",
+                    checked: draft.connect,
+                    onChange: (event) => update({ connect: event.target.checked })
+                  }
+                ),
+                "Keep chord changes in a nearby register"
+              ] }) })
+            ] }),
+            !selectedPath.length && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "arp-warning", role: "status", children: "This chord needs more room. Widen the fret window, choose more strings or try one octave. No notes are silently dropped." }),
+            studyView === "progression" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "arp-complete-tab-label", htmlFor: `${formId}-complete-tab`, children: [
+              "Complete progression tablature",
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "textarea",
+                {
+                  id: `${formId}-complete-tab`,
+                  className: "arp-complete-tab",
+                  readOnly: true,
+                  rows: 16,
+                  spellCheck: false,
+                  value: progressionTab
+                }
+              )
+            ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx(
+              ArpeggioNeck,
+              {
+                overview: draft.runRange === "full-neck",
+                view: studyView,
+                path: selectedPath,
+                tuning: tuning2,
+                minFret: draft.minFret,
+                maxFret: draft.maxFret,
+                leftHanded,
+                active: ((_a = preview.active) == null ? void 0 : _a.stepId) === selected.id ? preview.active : null,
+                onPlayNote: (note) => playReference([{ ...note, tick: 0, duration: 400, stepId: selected.id }], {
+                  tempo: draft.tempo,
+                  totalTicks: 480
+                })
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-transport", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-actions", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "button",
+                  {
+                    className: "arp-primary",
+                    type: "button",
+                    onClick: hearChord,
+                    disabled: !selectedPath.length,
+                    children: "Hear this arpeggio"
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: preview.stop, disabled: !preview.playing, children: "Stop reference" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => exportFile("tab"),
+                    disabled: studyView === "progression" ? !!compiled.missing.length : !selectedPath.length,
+                    children: studyView === "progression" ? "Save progression tab" : "Save run tab"
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { role: "status", children: preview.playing ? "Reference playing" : "Ready to practise" })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "arp-note", children: [
+              "Browser reference uses a simple tone. Recorded clean guitar plays in standalone Cassian.",
+              " ",
+              "Guitar volume controls this example. Your rig, Band and recording stay unchanged.",
+              native
+            ] }),
+            !!compiled.missing.length && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "arp-warning", children: [
+              compiled.missing.length,
+              " ",
+              compiled.missing.length === 1 ? "chord needs" : "chords need",
+              " a wider range. Progression playback and MIDI export wait until every chord has a route."
+            ] }),
+            preview.error && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "arp-warning", role: "alert", children: preview.error }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              ArpeggioBandSend,
+              {
+                draft,
+                root,
+                tuning: tuning2,
+                genre,
+                status,
+                onNavigate,
+                onError,
+                onBusyChange: handleBandBusy,
+                onStopReference: preview.stop
+              },
+              resetEpoch
+            )
+          ] })
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "arp-panel", "aria-label": "Save and load arpeggio progressions", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-heading", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "arp-eyebrow", children: "KEEP THE GOOD IDEAS" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Your progression notebook." })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Saved locally. Portable files and MIDI stay yours." })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-controls", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-field-19`, children: [
+          "Saved progressions",
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "select",
+            {
+              id: `${formId}-field-19`,
+              value: savedChoice,
+              onChange: (event) => setSavedChoice(event.target.value),
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: "Choose a saved progression" }),
+                library.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: item.name, children: item.name }, item.name))
+              ]
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            disabled: !savedChoice,
+            onClick: () => {
+              preview.stop();
+              setPendingLoad(library.find((item) => item.name === savedChoice));
+            },
+            children: "Load saved progression"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-actions", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "arp-primary", type: "button", onClick: save, children: "Save progression" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => exportFile("json"), children: "Download progression" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => {
+          var _a2;
+          return (_a2 = fileInput.current) == null ? void 0 : _a2.click();
+        }, children: "Import progression" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            disabled: !!compiled.missing.length,
+            onClick: () => exportFile("midi"),
+            children: "Export MIDI"
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "input",
+          {
+            ref: fileInput,
+            type: "file",
+            accept: ".json,application/json",
+            hidden: true,
+            onChange: importFile,
+            "aria-label": "Import arpeggio progression file"
+          }
+        )
+      ] }),
+      pendingLoad && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "div",
+        {
+          className: "arp-load-confirm",
+          role: "group",
+          "aria-label": "Confirm progression replacement",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
+              "Replace the current draft with ",
+              /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: pendingLoad.name }),
+              "? Save or download your current draft first if you want to keep it."
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-actions", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => setPendingLoad(null), children: "Keep current draft" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: applyLoad, children: "Replace draft" })
+            ] })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "arp-feedback", role: "status", children: feedback || "Your draft stays here when switching tabs. Save it before closing the app. Saving an existing name updates that saved progression." })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      ArpeggioFoundations,
+      {
+        root,
+        disabled: atLimit,
+        onAddChord: addChord,
+        onHear: (events, options) => playReference(events, options, "ear"),
+        stop: preview.stop
+      }
+    )
+  ] });
+}
 const pathwayData = /* @__PURE__ */ JSON.parse('[{"id":"classical","label":"Classical & Spanish","bandGenre":"Acoustic folk","closestGroove":true,"bandNote":"Closest existing groove: Acoustic folk. This is not a dedicated classical, flamenco, cajón, or palmas accompaniment.","suggestedTuning":"standard","defaultScale":"harmonic-minor","tagline":"Independent voices, shaped phrases, and a clear picking hand.","theoryTitle":"Hear the leading tone in the cadence","theory":"The Andalusian descent is i–bVII–bVI–V. The final major V borrows the raised seventh from harmonic minor: hear that note pull back to the tonic. Keep the bass line smooth while upper notes sustain.","scales":["harmonic-minor","phrygian","aeolian"],"chords":[{"shape":"minor","offset":0},{"shape":"major","offset":10},{"shape":"major","offset":8},{"shape":"major","offset":7}],"progression":{"label":"Andalusian descent","meter":"4/4 · one chord per bar","steps":[{"degree":"i","offset":0,"suffix":"m"},{"degree":"bVII","offset":10,"suffix":""},{"degree":"bVI","offset":8,"suffix":""},{"degree":"V","offset":7,"suffix":""}]},"technique":{"title":"P–I–M–A independence","steps":["P is thumb; I, M, and A are index, middle, and ring. Put P on a chord bass and I–M–A on the G–B–e strings.","Play P–I–M–A as four even eighth notes, then P–A–M–I. Let the chord ring and keep the thumb quieter than the melody.","For a tremolo introduction, repeat P–A–M–I on one treble note. Start with a relaxed hand; speed comes after evenness."],"goal":"Repeat each pattern four times at a comfortable tempo without a louder final finger."},"rhythm":{"title":"Rasgueado preparation","count":"1 & 2 & 3 & 4 &","instruction":"On muted strings, release a relaxed ring–middle–index fan outward, then return with a light index upstroke. Keep the motion small. Practice the movement before adding the cadence."}},{"id":"math-rock","label":"Math Rock & Tapping","bandGenre":"Alternative / indie","closestGroove":true,"bandNote":"Closest existing groove: Alternative / indie. It does not supply a dedicated odd-meter math-rock pattern; count the 7/8 exercise on your own.","suggestedTuning":"facgce","defaultScale":"lydian","tagline":"Wide intervals, ringing extensions, and deliberate tapping.","theoryTitle":"A major sound with a raised fourth","theory":"Lydian adds #4 to a major scale. Contrast that note with the ordinary fourth, then resolve it to the fifth. Major sevenths and ninths spread a chord across the neck; an inversion can put the third below the root.","scales":["lydian","ionian","major-pentatonic"],"chords":[{"shape":"major7Inversion","offset":0},{"shape":"major9Inversion","offset":0},{"shape":"add9","offset":0}],"progression":{"label":"Lydian color study","meter":"7/8 · group 2 + 2 + 3","steps":[{"degree":"Imaj7","offset":0,"suffix":"maj7"},{"degree":"II","offset":2,"suffix":""},{"degree":"Iadd9","offset":0,"suffix":"add9"},{"degree":"II","offset":2,"suffix":""}]},"technique":{"title":"Two-hand tapping, one string first","steps":["In standard tuning, hold fret 5 on the G string, hammer fret 7 with the fretting hand, then tap fret 12 with the picking hand.","Pull the tapping finger off gently to fret 7, then pull off to fret 5. Mute unused strings with both hands.","Those notes are C–D–G, a fixed C-based exercise. On a different tuning, use the pitch display to find C–D–G again before repeating."],"goal":"Loop 5h7–T12–p7–p5 with equal volume. These reference frets do not transpose with the selected key."},"rhythm":{"title":"Seven eighths, not seven quarter notes","count":"ONE two · ONE two · ONE two three","instruction":"Tap the group starts while counting seven equal eighth notes. Keep the final three-note group the same subdivision. Then sustain a chord for each complete bar."}},{"id":"djent","label":"Djent & Prog","bandGenre":"Metalcore","closestGroove":true,"bandNote":"Closest existing groove: Metalcore. No dedicated djent, polymeter, or extended-range groove is added by this lesson.","suggestedTuning":"drop-d","defaultScale":"phrygian","tagline":"Precise subdivisions, controlled low strings, and complete silence.","theoryTitle":"Keep the pulse while accents move","theory":"A 3+3+3+3+4 accent pattern fills one bar of sixteen sixteenth notes in 4/4. The groups change the accents, not the bar length. Phrygian contributes a tense b2; use it as a deliberate approach into the root.","scales":["phrygian","aeolian","chromatic"],"chords":[{"shape":"power","offset":0},{"shape":"power","offset":1},{"shape":"minor","offset":0}],"progression":{"label":"Root / semitone contrast","meter":"4/4 · keep counting all rests","steps":[{"degree":"i5","offset":0,"suffix":"5"},{"degree":"bII5","offset":1,"suffix":"5"},{"degree":"i5","offset":0,"suffix":"5"},{"degree":"bVI5","offset":8,"suffix":"5"}]},"technique":{"title":"Dead-stop palm muting","steps":["Rest the picking-hand edge close to the bridge. Pick one low-string note, then stop it with both hands.","Alternate a short note and an equally measured rest. Release fretting pressure without lifting away from the string.","Add a second note only when every rest is quiet. A gate can assist, but the hands must create the stop."],"goal":"Play four bars of short notes and rests without letting a muted string ring into the next group."},"rhythm":{"title":"Sixteen-step accent grid","count":">.. >.. >.. >.. >...","instruction":"Each character is one sixteenth note; > is an accent and . is a quiet note or rest. Count 1 e & a 2 e & a 3 e & a 4 e & a underneath. This exercise stays in 4/4."}},{"id":"hip-hop","label":"Hip-Hop / Trap","bandGenre":"R&B / soul","closestGroove":true,"bandNote":"Closest existing groove: R&B / soul. It is not a dedicated trap groove and does not promise 808 bass or trap hi-hat rolls.","suggestedTuning":"standard","defaultScale":"aeolian","tagline":"Compact minor loops with space for the vocal and bass.","theoryTitle":"Add color without filling every beat","theory":"A minor ninth includes 1–b3–5–b7–9; the shell here leaves out the fifth. Move between minor and relative-major colors, then make a melody from only two or three notes. Leave the lowest register to the bass.","scales":["aeolian","minor-pentatonic","dorian"],"chords":[{"shape":"minor9","offset":0},{"shape":"major7","offset":8},{"shape":"major7","offset":3}],"progression":{"label":"Four-bar minor loop","meter":"4/4 · one chord per bar","steps":[{"degree":"i9","offset":0,"suffix":"m9"},{"degree":"bVImaj7","offset":8,"suffix":"maj7"},{"degree":"bIIImaj7","offset":3,"suffix":"maj7"},{"degree":"bVII","offset":10,"suffix":""}]},"technique":{"title":"Top-line loop and release","steps":["Arpeggiate a chord on beats 1 and 2, then stop the bass strings while the highest note rings.","Repeat the same rhythm on the next chord. Change only one top note when possible.","Leave beat 4 empty on the final bar so the loop has room to breathe. Record a clean repetition before adding ambience."],"goal":"Play the loop twice with the same note lengths and a clear empty beat before restarting."},"rhythm":{"title":"A sparse sixteenth pocket","count":"1 e & a 2 e & a 3 e & a 4 e & a","instruction":"Place a short chord on 1, the & of 2, and 3. Leave beat 4 open. Count all subdivisions while letting the rests stay silent."}},{"id":"pop","label":"Modern Pop","bandGenre":"Pop","suggestedTuning":"standard","defaultScale":"ionian","tagline":"Reliable changes, steady rhythm, and a melody worth repeating.","theoryTitle":"The same four functions in any major key","theory":"I–V–vi–IV uses three major chords and one minor chord. Numbers describe their jobs in the key, so the sequence survives a key change. Find the common notes between chords before adding a busier strum.","scales":["ionian","major-pentatonic","aeolian"],"chords":[{"shape":"major","offset":0},{"shape":"major","offset":7},{"shape":"minor","offset":9},{"shape":"major","offset":5}],"progression":{"label":"Four-chord song form","meter":"4/4 · one chord per bar","steps":[{"degree":"I","offset":0,"suffix":""},{"degree":"V","offset":7,"suffix":""},{"degree":"vi","offset":9,"suffix":"m"},{"degree":"IV","offset":5,"suffix":""}]},"technique":{"title":"Change before adding speed","steps":["Play the first chord for four quarter notes. Prepare the next shape while the last note is ringing.","Keep the strumming hand moving down–up in eighth notes, even where the pick misses the strings.","Accent beats 2 and 4, then reduce the strum to two or three strings for the quieter section."],"goal":"Repeat all four changes twice without delaying the first beat of a bar."},"rhythm":{"title":"Continuous hand, chosen attacks","count":"D · D U · U D U","instruction":"Read each slot as an eighth note. D is a downstroke, U an upstroke, and · a silent pass. Start slowly and keep the hand moving through the silent slots."}},{"id":"blues","label":"Blues & Roots","bandGenre":"Blues shuffle","suggestedTuning":"standard","defaultScale":"blues","tagline":"Five connected boxes, a swung pulse, and phrases that answer.","theoryTitle":"Minor and major color over dominant chords","theory":"Minor pentatonic is 1–b3–4–5–b7; the blues scale adds b5. Major pentatonic replaces the minor color with 2–3–6. Over a dominant I chord, compare b3 with 3 and resolve bends by ear instead of holding both as if they were interchangeable.","scales":["minor-pentatonic","blues","major-pentatonic","mixolydian"],"chords":[{"shape":"dominant7","offset":0},{"shape":"dominant7","offset":5},{"shape":"dominant7","offset":7}],"progression":{"label":"Twelve-bar blues","meter":"12 bars · 4/4 shuffle · one chord per bar","steps":[{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"IV7","offset":5,"suffix":"7"},{"degree":"IV7","offset":5,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"V7","offset":7,"suffix":"7"},{"degree":"IV7","offset":5,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"V7","offset":7,"suffix":"7"}]},"technique":{"title":"Bend, check, then answer","steps":["Pick a scale note and find its whole-step target two frets higher on the same string.","Play the target first, return to the lower note, then bend toward the remembered pitch. Use supporting fingers.","Make a two-beat call, leave two beats of space, and answer with a shorter phrase on a chord tone."],"goal":"Use one accurate bend and one deliberate rest in each four-bar phrase."},"rhythm":{"title":"Long–short shuffle","count":"ONE (trip) let · TWO (trip) let","instruction":"Divide each beat into three even parts. Play the first and third parts, leaving the middle silent. Keep all three parts even internally rather than guessing a dotted rhythm."}},{"id":"funk","label":"Funk & R&B","bandGenre":"Funk","suggestedTuning":"standard","defaultScale":"dorian","tagline":"Small voicings, short notes, and a hand that never loses time.","theoryTitle":"The chord color lives above the bass","theory":"Minor sevenths and dominant ninth shells leave room for the bass player. Dorian supplies a natural 6 over a minor groove. A dominant 7#9 combines the major third with a raised ninth, enharmonically the minor third; hear the tension rather than treating it as a plain minor chord.","scales":["dorian","minor-pentatonic","mixolydian"],"chords":[{"shape":"minor7","offset":0},{"shape":"dominant9","offset":5},{"shape":"dominant7sharp9","offset":0}],"progression":{"label":"Minor pocket into IV9","meter":"4/4 · two bars per chord","steps":[{"degree":"i7","offset":0,"suffix":"m7"},{"degree":"IV9","offset":5,"suffix":"9"}]},"technique":{"title":"The sixteenth-note chank","steps":["Rest the fretting hand across the strings without pressing. Strum four muted sixteenths on one beat.","Keep that down–up motion and press the chord only on the &. Release pressure immediately after the attack.","Limit the pick to the middle and upper strings. Alternate one bar of scratches with one bar containing two short chord accents."],"goal":"Make the pitched chank as short as the muted scratches while the hand stays relaxed."},"rhythm":{"title":"One accent inside the grid","count":"1 e & a · 2 e & a · 3 e & a · 4 e & a","instruction":"Count every slot. Sound the chord on the & of 1 and the a of 3; use light scratches elsewhere. Begin with just one chord before changing harmony."}},{"id":"jazz","label":"Jazz & Neo-Soul","bandGenre":"Jazz swing","suggestedTuning":"standard","defaultScale":"dorian","tagline":"Guide tones, close movement, and extended harmony.","theoryTitle":"Follow the thirds and sevenths","theory":"In a major ii–V–I, the ii chord is minor seventh, V is dominant seventh, and I is major seventh. Ninths add color without changing that function. Hear the seventh of ii move down to the third of V, then the seventh of V move down to the third of I.","scales":["dorian","mixolydian","ionian","locrian"],"chords":[{"shape":"minor9","offset":2},{"shape":"dominant9","offset":7},{"shape":"major7","offset":0},{"shape":"major9Inversion","offset":0}],"progression":{"label":"Major ii–V–I turnaround","meter":"4/4 · one chord per bar","steps":[{"degree":"ii9","offset":2,"suffix":"m9"},{"degree":"V9","offset":7,"suffix":"9"},{"degree":"Imaj7","offset":0,"suffix":"maj7"},{"degree":"vi7","offset":9,"suffix":"m7"}]},"technique":{"title":"Guide-tone voice leading","steps":["First play only the third and seventh of each ii–V–I chord. Move each voice by the smallest available distance.","Add the chord root, then the ninth. The shell voicings omit the fifth so the inner voices remain clear.","For a drop-2 exercise, spell a close-position seventh chord top to bottom, then move its second-highest note down an octave. Re-find the notes rather than applying that name to every four-note grip."],"goal":"Sing one moving inner voice while playing the progression; keep its notes audible inside the chord."},"rhythm":{"title":"Comp with room between chords","count":"1 · 2 & · 3 · 4 &","instruction":"Play a short chord on beat 1 and the & of 2, then leave beat 3 clear. Add the & of 4 only as a pickup into the next bar. Listen to the bass and avoid filling every gap."}},{"id":"indie","label":"Indie / Shoegaze","bandGenre":"Alternative / indie","suggestedTuning":"dadgad","defaultScale":"lydian","tagline":"Ringing drones, suspended thirds, and deliberate layers.","theoryTitle":"Separate suspension from added color","theory":"Sus2 and sus4 replace the third; add9 retains the third and adds the second an octave higher in the chord spelling. A ringing open string becomes a different interval when the chord beneath it changes. Check that relationship before letting it drone through every chord.","scales":["lydian","ionian","major-pentatonic"],"chords":[{"shape":"add9","offset":0},{"shape":"sus2","offset":0},{"shape":"sus4","offset":0},{"shape":"major7","offset":5}],"progression":{"label":"Suspended landscape","meter":"4/4 · one chord per bar","steps":[{"degree":"Iadd9","offset":0,"suffix":"add9"},{"degree":"IVmaj7","offset":5,"suffix":"maj7"},{"degree":"vi7","offset":9,"suffix":"m7"},{"degree":"Vsus4","offset":7,"suffix":"sus4"}]},"technique":{"title":"Build one sustained layer","steps":["In standard tuning, alternate the root add9 and sus2 shapes, letting the top strings ring.","Pick a different string on each beat instead of strumming the full chord. Mute the lowest string when it is marked ×.","For DADGAD, select the tuning and use the fretboard to rebuild the pitches. These standard-tuning grips must not be copied unchanged."],"goal":"Record a clear four-bar arpeggio before adding a second layer or increasing the reverb."},"rhythm":{"title":"A pulse inside the wash","count":"1 & 2 & 3 & 4 &","instruction":"Accent 1 and 3 lightly while the arpeggio continues in eighth notes. Let sustain connect the notes, but stop both hands together at the end of bar four."}},{"id":"country","label":"Country","bandGenre":"Country","suggestedTuning":"standard","defaultScale":"major-pentatonic","tagline":"Alternating bass, bright double stops, and clean hybrid attacks.","theoryTitle":"Numbers, thirds, and sixths","theory":"The Nashville-style 1–4–5–6m pattern uses major I, IV, V and minor vi. Major pentatonic gives a clear melodic starting point. Pair scale notes a third or a sixth apart, changing the interval size as the major scale requires.","scales":["major-pentatonic","ionian","mixolydian"],"chords":[{"shape":"major","offset":0},{"shape":"major","offset":5},{"shape":"dominant7","offset":7},{"shape":"minor","offset":9}],"progression":{"label":"1–4–5–6m numbers","meter":"4/4 · one chord per bar","steps":[{"degree":"1","offset":0,"suffix":""},{"degree":"4","offset":5,"suffix":""},{"degree":"5","offset":7,"suffix":""},{"degree":"6m","offset":9,"suffix":"m"}]},"technique":{"title":"Hybrid picking and double stops","steps":["Hold the pick normally and use the middle finger for a higher string. Alternate a picked bass note and a finger-plucked treble note.","In standard tuning, try G-string fret 4 with B-string fret 3, then G5 with B5. These are B–D and C–E: a minor third, then a major third.","Keep those fixed reference frets distinct from the selected key. Use the scale display to build diatonic thirds in a new key."],"goal":"Keep bass and treble equally even for eight bars without pulling the treble string sharply upward."},"rhythm":{"title":"Root–fifth train pulse","count":"ROOT & chord & FIFTH & chord &","instruction":"In 4/4, place root on beat 1, a light chord on 2, fifth on 3, and chord on 4. Keep the eighth-note motion small and let the backbeats stay crisp."}},{"id":"classic-rock","label":"Classic Rock","bandGenre":"Rock","suggestedTuning":"standard","defaultScale":"minor-pentatonic","tagline":"Open-chord weight, connected CAGED forms, and dynamic control.","theoryTitle":"Find one chord in five places","theory":"CAGED names five major-chord forms, not five different keys. Each form can spell the same major chord at a different neck position. Power chords omit the third, so they leave major or minor color to the surrounding melody and harmony.","scales":["minor-pentatonic","major-pentatonic","mixolydian"],"chords":[{"shape":"major","offset":0},{"shape":"power","offset":10},{"shape":"major","offset":5}],"progression":{"label":"Mixolydian rock movement","meter":"4/4 · one chord per bar","steps":[{"degree":"I","offset":0,"suffix":""},{"degree":"bVII","offset":10,"suffix":""},{"degree":"IV","offset":5,"suffix":""},{"degree":"I","offset":0,"suffix":""}]},"technique":{"title":"Riff into chord","steps":["Play a two-note pentatonic pickup, then land on a full chord at the next beat 1.","Repeat with lighter picking and a lower guitar-volume setting. Listen for the chord becoming clearer without changing the rhythm.","Move a small fragment of the chord into the next CAGED area. Follow root notes instead of memorizing only the outside shape."],"goal":"Play one four-bar phrase softly, then strongly, with the same pulse and clean chord endings."},"rhythm":{"title":"Eighth-note drive","count":"1 & 2 & 3 & 4 &","instruction":"Begin with eight even downstrokes. Accent 2 and 4 without speeding up, then leave the & of 4 silent before the next chord."}},{"id":"metal","label":"Heavy Metal","bandGenre":"Thrash","suggestedTuning":"seven-standard","defaultScale":"harmonic-minor","tagline":"Tight gallops, controlled strings, and dark melodic tension.","theoryTitle":"Choose the source of the tension","theory":"Natural minor has b6 and b7. Harmonic minor raises the seventh, producing a strong leading tone and a three-semitone gap between b6 and 7. Phrygian instead adds b2 to natural minor. Learn those colors separately before combining them in a riff.","scales":["harmonic-minor","phrygian","aeolian","minor-pentatonic"],"chords":[{"shape":"power","offset":0},{"shape":"power","offset":8},{"shape":"power","offset":7},{"shape":"minor","offset":0}],"progression":{"label":"Minor-key power movement","meter":"4/4 · one chord per bar","steps":[{"degree":"i5","offset":0,"suffix":"5"},{"degree":"bVI5","offset":8,"suffix":"5"},{"degree":"bVII5","offset":10,"suffix":"5"},{"degree":"V5","offset":7,"suffix":"5"}]},"technique":{"title":"Palm-muted gallop","steps":["On one low note, play one eighth note followed by two sixteenth notes. Count 1 & a within the beat: long–short–short.","Use down–down–up or an alternate-picking approach that remains relaxed. Leave a full beat of silence after three gallops.","Move the pattern between power chords while touching unused strings with both hands. Add tempo only when the final sixteenth lands evenly."],"goal":"Play four bars with identical gallop spacing and no extra string noise between chord changes."},"rhythm":{"title":"Long–short–short subdivision","count":"1 (e) & a · 2 (e) & a · 3 (e) & a · REST","instruction":"The parenthesized e continues the first eighth note; it is not another attack. Sound 1, &, a on each beat, then leave beat 4 silent. Keep the sixteenth-note grid even."}}]');
 const rhythmGenres = [
   "Rock",
@@ -12546,60 +16122,6 @@ function canShowChordShape(chord, tuningId, root) {
     chord && Array.isArray(chord.frets) && chord.tuning === tuningId && chord.frets.length === getLearnTuning(tuningId).notes.length && Number.isFinite(chord.baseRoot) && pitchClass(chord.baseRoot) === pitchClass(root)
   );
 }
-const Context = reactExports.createContext(null);
-function createRetainedViewStore() {
-  const fields = /* @__PURE__ */ new Map(), refs = /* @__PURE__ */ new Map(), identity = (scope, key) => JSON.stringify([scope, key]);
-  return {
-    field(scope, key, initial) {
-      const id = identity(scope, key);
-      if (!fields.has(id)) {
-        let value = typeof initial === "function" ? initial() : initial;
-        const listeners = /* @__PURE__ */ new Set();
-        fields.set(id, {
-          read: () => value,
-          subscribe: (listener) => {
-            listeners.add(listener);
-            return () => listeners.delete(listener);
-          },
-          write: (update) => {
-            const next = typeof update === "function" ? update(value) : update;
-            if (Object.is(next, value)) return;
-            value = next;
-            [...listeners].forEach((listener) => listener());
-          },
-          listenerCount: () => listeners.size
-        });
-      }
-      return fields.get(id);
-    },
-    ref(scope, key, initial) {
-      const id = identity(scope, key);
-      if (!refs.has(id)) refs.set(id, { current: initial });
-      return refs.get(id);
-    },
-    listenerCount: () => [...fields.values()].reduce(
-      (sum, field) => sum + field.listenerCount(),
-      0
-    )
-  };
-}
-function RetainedViewBoundary({ children, store }) {
-  const inherited = reactExports.useContext(Context), own = reactExports.useRef(null);
-  if (!store && !inherited && !own.current)
-    own.current = createRetainedViewStore();
-  const selected = store ?? inherited ?? own.current;
-  return selected === inherited ? children : reactExports.createElement(Context.Provider, { value: selected }, children);
-}
-function useStore() {
-  const inherited = reactExports.useContext(Context), own = reactExports.useRef(null);
-  if (!inherited && !own.current) own.current = createRetainedViewStore();
-  return inherited ?? own.current;
-}
-function useRetainedState(scope, key, initial) {
-  const field = useStore().field(scope, key, initial);
-  const value = reactExports.useSyncExternalStore(field.subscribe, field.read, field.read);
-  return [value, field.write];
-}
 const defaultPreferences = {
   schema: 1,
   pathway: "blues",
@@ -12630,7 +16152,7 @@ function sanitizePreferences(value) {
       LEARN_SCALES.map((row) => row.id)
     ),
     handedness: oneOf("handedness", ["left", "right"]),
-    section: oneOf("section", ["lesson", "neck", "tone"]),
+    section: oneOf("section", ["lesson", "neck", "arpeggios", "tone"]),
     tempo: Number.isInteger(source.tempo) && source.tempo >= 40 && source.tempo <= 200 ? source.tempo : 80,
     completed: [
       ...new Set(Array.isArray(source.completed) ? source.completed : [])
@@ -14281,6 +17803,7 @@ function LearnContent({
   const tabs = [
     ["lesson", "Lesson"],
     ["neck", "Fretboard"],
+    ["arpeggios", "Arpeggios"],
     ["tone", "Tone guide"]
   ];
   const tabRefs = reactExports.useRef([]);
@@ -14377,7 +17900,7 @@ function LearnContent({
             onClick: () => switchSection(id),
             onKeyDown: (event) => {
               var _a;
-              const next = event.key === "ArrowRight" ? (index + 1) % 3 : event.key === "ArrowLeft" ? (index + 2) % 3 : event.key === "Home" ? 0 : event.key === "End" ? 2 : null;
+              const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : null;
               if (next !== null) {
                 event.preventDefault();
                 switchSection(tabs[next][0]);
@@ -14500,6 +18023,17 @@ function LearnContent({
               }
             )
           ] }),
+          prefs.section === "arpeggios" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+            ArpeggioBuilder,
+            {
+              root: prefs.root,
+              tuning: ["standard", "drop-d", "d-standard", "drop-c", "c-standard", "b-standard", "seven-standard", "seven-drop-a", "dadgad"].includes(prefs.tuning) ? prefs.tuning : "standard",
+              onRootChange: (root) => update({ root }),
+              onTuningChange: (tuning2) => update({ tuning: tuning2 }),
+              leftHanded,
+              onLeftHandedChange: (left) => update({ handedness: left ? "left" : "right" })
+            }
+          ),
           prefs.section === "tone" && /* @__PURE__ */ jsxRuntimeExports.jsx(ToneGuide, { pathway: pathway.id }, pathway.id)
         ]
       }

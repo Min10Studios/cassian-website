@@ -13,18 +13,18 @@
     },
     {
       "file": "cassian-learn.css",
-      "bytes": 29067,
-      "sha256": "f3f17e08ec7ce9fde7d6d4aacf900f033829739d031025cd082d0b3d80e969c2"
+      "bytes": 47868,
+      "sha256": "3d1ca2db7030899a7cc86405be4df6ebdb53a60262ff5e33a895e83703604f6e"
     },
     {
       "file": "cassian-learn.js",
-      "bytes": 675867,
-      "sha256": "06c8721b203adcf5302d3af1742baac4d001e00a1acf9ee2739564ecc2ebeece"
+      "bytes": 811905,
+      "sha256": "b4a7a0a36e9d2e3b4b9ca4ffaa84f684b98bdc2b846b260486f2e141c7a858bd"
     },
     {
       "file": "learn-source.zip",
-      "bytes": 398912,
-      "sha256": "e764632ecc51e10303dd29128f7ee5d0b31812d879d4115de2818aacc9ead52e"
+      "bytes": 561563,
+      "sha256": "5a456680b3ec60409c3ce9c4fb7d41352d94b83205dc78079931739a3534f417"
     }
   ]
 }
