@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "status": "release-ready",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "channel": "Release",
   "format": "Windows standalone",
-  "date": "2026-11-25",
-  "sourceCommit": "8917dc0ea788110b5713207a863f38fb7cb8f884",
-  "tag": "v1.4.0",
-  "releaseUrl": "https://github.com/Min10Studios/cassian-website/releases/tag/v1.4.0",
-  "downloadUrl": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.0/Cassian-1.4.0-Setup.exe",
+  "date": "2026-11-26",
+  "sourceCommit": "22c2713f4d8d8b03defb9ab7e404c39a35bfb717",
+  "tag": "v1.4.1",
+  "releaseUrl": "https://github.com/Min10Studios/cassian-website/releases/tag/v1.4.1",
+  "downloadUrl": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.1/Cassian-1.4.1-Setup.exe",
   "signed": false,
   "distribution": {
     "free": true,
@@ -28,71 +28,69 @@
   "restoredPresets": 8,
   "knownIssue": "High-gain rigs may expose idle input noise. Founder reported idle crackle through an AudioBox; gain staging, gate and EQ refinements are planned next. The earlier Drive-feedback report remains open.",
   "runtimeChecks": {
-    "nativeApplicationBuild": "PASS: final standalone, scanner and embedded production UI build",
-    "learnNative": "PASS: real clean samples, four chords, timing, loop/stop, volume, block invariance, invalid inputs and saved-Band preservation",
-    "browserIntegration": "PASS: three affected checks; workshop mounting, ECDB order and shared left-handed preference",
-    "browserReview": "PASS: ECDB, whole-neck fit and homepage at desktop viewport",
+    "nativeApplicationBuild": "PASS: standalone, scanner and embedded UI build",
+    "affectedLearnChecks": "PASS: 180 Learn/bass frontend cases; overlapping final spelling and curriculum checks; 28 chord qualities and 94 templates; 1476 native chord/root/inversion expectations",
+    "nativeLearnPlayback": "PASS: focused existing Learn playback target on the release build",
+    "browserIntegration": "PASS: 11 affected spelling, workshop, handedness and E-minor dominant cases",
     "installerPayloadEquality": {
       "status": "PASS",
       "files": 623
     },
-    "sourceArchiveIntegrity": "PASS: CRC, complete manifest and Learn delta; CRLF/LF label normalization recorded",
-    "nativeScreenCheck": "INCOMPLETE: initial isolated launch lacked its sound-bank fixture; final fixture prepared and final 1.4.0 launched, then user stopped screen control",
-    "finalNativeTitle": "1.4.0 source and product version; final screen readback NOT RUN",
-    "liveAudioBoxListening": "NOT RUN for this final package",
-    "cleanInstallUpgrade": "NOT RUN; extractor payload verification performed",
-    "absentWebView2Installation": "NOT RUN",
+    "sourceArchiveIntegrity": "PASS: CRC and complete source hash manifest",
+    "cleanInstall": "NOT RUN",
+    "localUpgrade": "PASS: existing 1.4.0 installation updated to 1.4.1; all payload hashes and retained user files verified",
+    "liveAudioBoxListening": "NOT RUN for this patch",
     "fullRegression": "NOT RUN"
   },
   "artifacts": [
     {
       "role": "installer",
-      "name": "Cassian-1.4.0-Setup.exe",
-      "bytes": 360115014,
-      "sha256": "f9da6dc43770ebe77a1bb584dd9f162ad2fb2376953594801f534bc779093225",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.0/Cassian-1.4.0-Setup.exe"
+      "name": "Cassian-1.4.1-Setup.exe",
+      "bytes": 360113294,
+      "sha256": "3d25a7967987f24ad08e62a9dca0db15df1c5ee116b6c51da784a0762f793a09",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.1/Cassian-1.4.1-Setup.exe"
     },
     {
       "role": "application-source",
-      "name": "Cassian-1.4.0-Source.zip",
-      "bytes": 206185608,
-      "sha256": "275f11a2c90bf0969ebf1df7f85a50230b405eeca9fad4bde992ee6db2e24e48",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.0/Cassian-1.4.0-Source.zip"
+      "name": "Cassian-1.4.1-Source.zip",
+      "bytes": 206195502,
+      "sha256": "93e89575274505a521c5cb040063adbf4a7b7ee7a62270c250277e3734d55980",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.1/Cassian-1.4.1-Source.zip"
     },
     {
       "role": "model-source",
       "name": "Cassian-1.0.0-Model-Source.zip",
       "bytes": 38923822,
       "sha256": "b5d29d1c4b24536137e9c50dfe0dcd6d0a853b9b5e287624e4ea2c18c59aea49",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.0/Cassian-1.0.0-Model-Source.zip"
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.1/Cassian-1.0.0-Model-Source.zip"
     },
     {
       "role": "restored-model-source",
       "name": "Cassian-1.2.2-MIT-Model-Source.zip",
       "bytes": 811132,
       "sha256": "7a5c45228663925627d21377cf64b1fed0d8974d67d5ee6d85337e8363278894",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.0/Cassian-1.2.2-MIT-Model-Source.zip"
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.1/Cassian-1.2.2-MIT-Model-Source.zip"
     },
     {
       "role": "notices",
       "name": "NOTICES.txt",
       "bytes": 5146,
       "sha256": "21396b07a554446652c9ba991fed394174c10752c9c39663180ef3cc4b8e01bd",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.0/NOTICES.txt"
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.1/NOTICES.txt"
     },
     {
       "role": "release-notes",
       "name": "RELEASE-NOTES.txt",
-      "bytes": 1499,
-      "sha256": "87eca0c5d77c58b397989c428e3da071fb411c5ee27e0b62baacc522e4805ece",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.0/RELEASE-NOTES.txt"
+      "bytes": 1178,
+      "sha256": "c3fd54fc4d32b1eab52b06b7b103a5da4ebbaab48f5f68da54a7e5f2720e090f",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.1/RELEASE-NOTES.txt"
     },
     {
       "role": "source-recipe",
       "name": "SOURCE-RECIPE.json",
-      "bytes": 632,
-      "sha256": "811b7c1aad4b00506c21030c17aff60654c6d9aac2c6d64f4f0c2c146c19d558",
-      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.0/SOURCE-RECIPE.json"
+      "bytes": 589,
+      "sha256": "c78448e956088353bb624bdc3c0f4267089e32667c2eca43d670dcc86bf4e7b9",
+      "url": "https://github.com/Min10Studios/cassian-website/releases/download/v1.4.1/SOURCE-RECIPE.json"
     }
   ],
   "learn": {
@@ -103,6 +101,10 @@
     "leftHanded": true,
     "desktopCleanGuitar": true,
     "browserAudio": "synthetic reference",
-    "desktopBandMapping": true
+    "desktopBandMapping": true,
+    "theoryCorrections": true,
+    "scaleReference": true,
+    "keyCorrectNoteSpelling": true,
+    "browserVersion": "0.2.1"
   }
 }

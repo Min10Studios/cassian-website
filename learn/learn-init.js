@@ -8,9 +8,9 @@ async function openLearningRoom() {
   feedback.hidden = false;
   feedback.textContent = 'Opening the learning room…';
   try {
-    const { mountCassianLearn } = await import('./app/cassian-learn.js?v=1.4.0');
+    const { mountCassianLearn } = await import('./app/cassian-learn.js?v=1.4.1');
     instance = await mountCassianLearn(host, {
-      stylesUrl: new URL('./app/cassian-learn.css?v=1.4.0', import.meta.url).href,
+      stylesUrl: new URL('./app/cassian-learn.css?v=1.4.1', import.meta.url).href,
       sourceUrl: new URL('./app/learn-source.zip', import.meta.url).href,
       storageKey: 'cassian.learn.web.v1',
       initialState: location.hash === '#arpeggios' ? {section: 'arpeggios'} : undefined,
