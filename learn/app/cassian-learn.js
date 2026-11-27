@@ -12050,7 +12050,41 @@ function useRetainedState(scope, key, initial) {
   return [value, field.write];
 }
 const NOTE_NAMES$1 = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
-const LEARN_KEYS$1 = NOTE_NAMES$1.map((name, value) => ({ value, name }));
+const NOTE_CHOICES$1 = [
+  "C",
+  "C# / Db",
+  "D",
+  "D# / Eb",
+  "E",
+  "F",
+  "F# / Gb",
+  "G",
+  "G# / Ab",
+  "A",
+  "A# / Bb",
+  "B"
+];
+const letters$1 = ["C", "D", "E", "F", "G", "A", "B"];
+const naturals$1 = [0, 2, 4, 5, 7, 9, 11];
+function pitchClass$3(note) {
+  return (Math.trunc(Number(note) || 0) % 12 + 12) % 12;
+}
+function spellFromRoot$1(rootName, soundingPitch, letterSteps) {
+  const letter = (letters$1.indexOf(rootName[0]) + letterSteps) % 7;
+  let alteration = pitchClass$3(soundingPitch - naturals$1[letter]);
+  if (alteration > 6) alteration -= 12;
+  return letters$1[letter] + (alteration < 0 ? "b".repeat(-alteration) : "#".repeat(alteration));
+}
+function noteNameInKey$1(root, offset) {
+  const degrees = [0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 6];
+  const tonic = pitchClass$3(root), relative = pitchClass$3(offset);
+  return spellFromRoot$1(NOTE_NAMES$1[tonic], tonic + relative, degrees[relative]);
+}
+function spelledOctave(midi, name) {
+  const accidental = [...name.slice(1)].reduce((sum, mark) => sum + (mark === "#" ? 1 : -1), 0);
+  return Math.floor((midi - naturals$1[letters$1.indexOf(name[0])] - accidental) / 12) - 1;
+}
+const LEARN_KEYS$1 = NOTE_CHOICES$1.map((name, value) => ({ value, name }));
 const tuning$1 = (id, name, notes) => ({ id, name, notes, openNotes: notes.map(midiNoteName$1) });
 const LEARN_TUNINGS$1 = [
   tuning$1("standard", "Standard E", [40, 45, 50, 55, 59, 64]),
@@ -12063,17 +12097,14 @@ const LEARN_TUNINGS$1 = [
   tuning$1("daeacse", "DAEAC#E", [38, 45, 52, 57, 61, 64]),
   tuning$1("cgdgbd", "CGDGBD", [36, 43, 50, 55, 59, 62])
 ];
-function pitchClass$2(note) {
-  return (Math.trunc(Number(note) || 0) % 12 + 12) % 12;
-}
 function midiNoteName$1(midi) {
-  return NOTE_NAMES$1[pitchClass$2(midi)] + (Math.floor(midi / 12) - 1);
+  return NOTE_NAMES$1[pitchClass$3(midi)] + (Math.floor(midi / 12) - 1);
 }
 function getLearnTuning$1(id = "standard") {
   return LEARN_TUNINGS$1.find((item) => item.id === id) || LEARN_TUNINGS$1[0];
 }
 function guitarStringLabel(openMidi, highest = false) {
-  const name = NOTE_NAMES$1[pitchClass$2(openMidi)];
+  const name = NOTE_NAMES$1[pitchClass$3(openMidi)];
   return highest && name === "E" ? "e" : name;
 }
 const MORE_ARPEGGIO_PROGRESSIONS = [
@@ -12121,7 +12152,7 @@ const MORE_ARPEGGIO_PROGRESSIONS = [
     steps: [
       [0, "minor"],
       [1, "major"],
-      [2, "dim7"],
+      [2, "diminished"],
       [0, "minor"]
     ]
   },
@@ -12844,7 +12875,7 @@ const MORE_ARPEGGIO_PROGRESSIONS = [
       [10, "major"],
       [3, "major"],
       [8, "major"],
-      [2, "dim7"],
+      [2, "diminished"],
       [7, "7"],
       [0, "minor"]
     ]
@@ -12857,7 +12888,7 @@ const MORE_ARPEGGIO_PROGRESSIONS = [
     steps: [
       [0, "major"],
       [5, "major"],
-      [11, "dim7"],
+      [11, "diminished"],
       [4, "minor"],
       [9, "minor"],
       [2, "minor"],
@@ -13275,8 +13306,8 @@ const MAX_ARPEGGIO_STEPS = 32;
 const ARPEGGIO_STORAGE_KEY = "cassian.learn.arpeggios.v1";
 const clamp = (value, min, max, fallback) => Number.isFinite(Number(value)) ? Math.min(max, Math.max(min, Math.round(Number(value)))) : fallback;
 const getArpeggioQuality = (id) => ARPEGGIO_QUALITIES.find((item) => item.id === id) ?? ARPEGGIO_QUALITIES[0];
-const getArpeggioRoot = (key, step) => pitchClass$2(key + step.offset);
-const arpeggioName = (key, step) => NOTE_NAMES$1[getArpeggioRoot(key, step)] + getArpeggioQuality(step.quality).suffix;
+const getArpeggioRoot = (key, step) => pitchClass$3(key + step.offset);
+const arpeggioName = (key, step) => noteNameInKey$1(key, step.offset) + getArpeggioQuality(step.quality).suffix;
 function parseArpeggioSequence(text, key = 0, firstId = 1) {
   const source = String(text).trim().replaceAll("♯", "#").replaceAll("♭", "b");
   if (!source || source.length > 256)
@@ -13288,21 +13319,22 @@ function parseArpeggioSequence(text, key = 0, firstId = 1) {
   }
   aliases.set("min", "minor");
   aliases.set("maj", "major");
-  const notePitch = (letter, accidental = "") => pitchClass$2(
+  const notePitch = (letter, accidental = "") => pitchClass$3(
     { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[letter.toUpperCase()] + (accidental === "#" ? 1 : accidental === "b" ? -1 : 0)
   );
   const parseChord = (token) => {
     const match = /^([A-Ga-g])([#b]?)([^/]*)(?:\/([A-Ga-g])([#b]?))?$/.exec(token);
     if (!match) throw new Error(`Could not read “${token}”. Separate chords with spaces.`);
     const suffix = match[3];
-    const id = suffix === "M" ? "major" : suffix === "M7" ? "maj7" : aliases.get(suffix.toLowerCase());
+    const majorAliases = { M: "major", M6: "6", M7: "maj7", M9: "maj9", M13: "maj13" };
+    const id = /^M(?:\d|$)/.test(suffix) ? majorAliases[suffix] : aliases.get(suffix.toLowerCase());
     if (!id) throw new Error(`Unsupported chord “${token}”. Choose a chord type from the builder.`);
     const root = notePitch(match[1], match[2]), chord = getArpeggioQuality(id);
     const bass = match[4] ? notePitch(match[4], match[5]) : root;
-    const inversion = chord.intervals.findIndex((interval) => pitchClass$2(root + interval) === bass);
+    const inversion = chord.intervals.findIndex((interval) => pitchClass$3(root + interval) === bass);
     if (inversion < 0)
       throw new Error(`The bass note in “${token}” must be one of its chord tones.`);
-    return { offset: pitchClass$2(root - key), quality: id, inversion, bars: 1, pattern: "up-down" };
+    return { offset: pitchClass$3(root - key), quality: id, inversion, bars: 1, pattern: "up-down" };
   };
   let tokens;
   if (/[\s,|→–—-]/.test(source)) tokens = source.split(/[\s,|→–—-]+/).filter(Boolean);
@@ -13325,19 +13357,12 @@ function parseArpeggioSequence(text, key = 0, firstId = 1) {
     throw new Error("A progression can contain 1–32 chords.");
   return tokens.map((token, index) => ({ ...parseChord(token), id: firstId + index }));
 }
-function spellChordTones(root, id) {
+function spellChordTones(root, id, rootName = NOTE_NAMES$1[pitchClass$3(root)]) {
   const selected = getArpeggioQuality(id);
-  const rootName = NOTE_NAMES$1[pitchClass$2(root)];
-  const letters = ["C", "D", "E", "F", "G", "A", "B"];
-  const natural = [0, 2, 4, 5, 7, 9, 11];
-  const start = letters.indexOf(rootName[0]);
   return selected.intervals.map((interval, index) => {
     const degree = Number(selected.degrees[index].replace(/[^0-9]/g, ""));
-    const letter = (start + degree - 1) % 7;
-    let alteration = pitchClass$2(root + interval - natural[letter]);
-    if (alteration > 6) alteration -= 12;
-    const name = letters[letter] + (alteration < 0 ? "b".repeat(-alteration) : "#".repeat(alteration));
-    return { name, degree: selected.degrees[index], pitch: pitchClass$2(root + interval) };
+    const name = spellFromRoot$1(rootName, root + interval, degree - 1);
+    return { name, degree: selected.degrees[index], pitch: pitchClass$3(root + interval) };
   });
 }
 function createArpeggioProgression(templateId = "jazz") {
@@ -13354,6 +13379,7 @@ function createArpeggioProgression(templateId = "jazz") {
     minFret: 0,
     maxFret: 5,
     runRange: "octaves",
+    referenceScale: template.id === "jazz" ? "major" : "none",
     strings: "all",
     connect: true,
     steps: template.steps.map(([offset, chord], index) => ({
@@ -13377,7 +13403,7 @@ function normalizeArpeggioProgression(input) {
     const selected = getArpeggioQuality(step.quality);
     return {
       id: index + 1,
-      offset: pitchClass$2(step.offset),
+      offset: pitchClass$3(step.offset),
       quality: selected.id,
       inversion: clamp(step.inversion, 0, selected.intervals.length - 1, 0),
       bars: clamp(step.bars, 1, 8, 1),
@@ -13387,8 +13413,9 @@ function normalizeArpeggioProgression(input) {
   const minFret = clamp(input.minFret, 0, 19, 0);
   return {
     ...defaults,
+    referenceScale: HARMONY_SCALES.some((scale) => scale.id === input.referenceScale) ? input.referenceScale : "none",
     name: String(input.name || "My progression").replace(/[\u0000-\u001f]/g, "").slice(0, 80),
-    key: pitchClass$2(input.key),
+    key: pitchClass$3(input.key),
     tuning: getLearnTuning$1(input.tuning).id,
     tempo: clamp(input.tempo, 40, 240, 90),
     meter: ARPEGGIO_METERS.includes(input.meter) ? input.meter : "4/4",
@@ -13452,9 +13479,9 @@ function buildArpeggioPath(root, step, options = {}, previousMidi = null) {
   const octaves = clamp(options.octaves, 1, 2, 1);
   const wholeNeck = options.runRange === "full-neck";
   const inversion = clamp(step.inversion, 0, selected.intervals.length - 1, 0);
-  const bass = pitchClass$2(root + selected.intervals[inversion]);
-  const pitches = [...new Set(selected.intervals.map((interval) => pitchClass$2(root + interval)))];
-  const relative = pitches.map((pitch) => pitchClass$2(pitch - bass)).sort((a, b) => a - b);
+  const bass = pitchClass$3(root + selected.intervals[inversion]);
+  const pitches = [...new Set(selected.intervals.map((interval) => pitchClass$3(root + interval)))];
+  const relative = pitches.map((pitch) => pitchClass$3(pitch - bass)).sort((a, b) => a - b);
   const offsets = Array.from(
     { length: octaves },
     (_, octave) => relative.map((offset) => offset + octave * 12)
@@ -13472,21 +13499,23 @@ function buildArpeggioPath(root, step, options = {}, previousMidi = null) {
     }));
   });
   const nameFor = (midi) => {
-    const tone = spellChordTones(root, selected.id).find((item) => item.pitch === pitchClass$2(midi));
-    return { ...tone, octave: Math.floor(midi / 12) - 1 };
+    const tone = spellChordTones(root, selected.id, options.rootName).find(
+      (item) => item.pitch === pitchClass$3(midi)
+    );
+    return { ...tone, octave: spelledOctave(midi, tone.name) };
   };
   const firstString = Math.min(...cells.map((cell) => cell.stringIndex));
   const lastString = Math.max(...cells.map((cell) => cell.stringIndex));
   const starts = [
     ...new Set(
       cells.filter(
-        (cell) => pitchClass$2(cell.midi) === bass && (!wholeNeck || cell.stringIndex === firstString)
+        (cell) => pitchClass$3(cell.midi) === bass && (!wholeNeck || cell.stringIndex === firstString)
       ).map((cell) => cell.midi)
     )
   ].sort((a, b) => a - b);
   const fullPitches = [
     ...new Set(
-      cells.filter((cell) => pitches.includes(pitchClass$2(cell.midi))).map((cell) => cell.midi)
+      cells.filter((cell) => pitches.includes(pitchClass$3(cell.midi))).map((cell) => cell.midi)
     )
   ].sort((a, b) => a - b);
   let best = null;
@@ -13534,7 +13563,7 @@ function compileArpeggioProgression(document2, key = document2.key, tuning2 = do
     const path = buildArpeggioPath(
       getArpeggioRoot(key, step),
       step,
-      { ...document2, tuning: tuning2 },
+      { ...document2, tuning: tuning2, rootName: noteNameInKey$1(key, step.offset) },
       document2.connect ? previousMidi : null
     );
     paths.push(path);
@@ -13551,7 +13580,7 @@ function compileArpeggioProgression(document2, key = document2.key, tuning2 = do
           pathIndex: index % path.length
         });
       }
-      previousMidi = path.at(-1).midi;
+      previousMidi = events.at(-1).midi;
     }
     startTick += ticks;
   }
@@ -13561,20 +13590,42 @@ function meterQuarterBeats(meter) {
   const [numerator, denominator] = (ARPEGGIO_METERS.includes(meter) ? meter : "4/4").split("/").map(Number);
   return numerator * 4 / denominator;
 }
-function chordConnection(fromRoot, fromQuality, toRoot, toQuality) {
-  const from = spellChordTones(fromRoot, fromQuality), to = spellChordTones(toRoot, toQuality);
+function chordConnection(fromRoot, fromQuality, toRoot, toQuality, key = null) {
+  const from = spellChordTones(
+    fromRoot,
+    fromQuality,
+    key === null ? void 0 : noteNameInKey$1(key, pitchClass$3(fromRoot - key))
+  ), to = spellChordTones(
+    toRoot,
+    toQuality,
+    key === null ? void 0 : noteNameInKey$1(key, pitchClass$3(toRoot - key))
+  );
   const shared = from.filter((tone) => to.some((next) => next.pitch === tone.pitch)).map((tone) => tone.name);
   let motion = null;
   for (const tone of from)
     for (const next of to) {
       const distance = Math.min(
-        pitchClass$2(next.pitch - tone.pitch),
-        pitchClass$2(tone.pitch - next.pitch)
+        pitchClass$3(next.pitch - tone.pitch),
+        pitchClass$3(tone.pitch - next.pitch)
       );
       if (distance && (!motion || distance < motion.distance))
         motion = { from: tone.name, to: next.name, distance };
     }
   return { shared, motion };
+}
+function arpeggioScaleReport(document2, key, scaleId = document2.referenceScale) {
+  const scale = HARMONY_SCALES.find((item) => item.id === scaleId);
+  if (!scale) return null;
+  const pitches = new Set(scale.intervals.map((interval) => pitchClass$3(key + interval)));
+  const chords = document2.steps.map((step) => {
+    const root = getArpeggioRoot(key, step), quality2 = getArpeggioQuality(step.quality);
+    const outside = spellChordTones(root, quality2.id, noteNameInKey$1(key, step.offset)).filter(
+      (tone) => !pitches.has(tone.pitch)
+    );
+    const minorDominant = scale.id === "minor" && pitchClass$3(root - key) === 7 && quality2.intervals.includes(4) && quality2.intervals.includes(10) && outside.length === 1 && outside[0].pitch === pitchClass$3(key + 11);
+    return { id: step.id, name: arpeggioName(key, step), outside, minorDominant };
+  });
+  return { scale, chords, outsideCount: chords.filter((chord) => chord.outside.length).length };
 }
 function arpeggioTab(document2, key = document2.key, tuning2 = document2.tuning, stepId = null) {
   const compiled = compileArpeggioProgression(document2, key, tuning2);
@@ -13584,7 +13635,7 @@ function arpeggioTab(document2, key = document2.key, tuning2 = document2.tuning,
   const rate = ARPEGGIO_RATES.find((item) => item.id === document2.rate).name;
   const lines = [
     `CASSIAN | ${document2.name}`,
-    `${NOTE_NAMES$1[pitchClass$2(key)]} | ${instrument.name}`,
+    `${NOTE_NAMES$1[pitchClass$3(key)]} | ${instrument.name}`,
     `${document2.tempo} quarter-note BPM | ${document2.meter} | ${rate}`,
     stepId === null ? "Complete progression, in playback order. Repeat from the first chord when looping." : "Selected run, once through the complete picking pattern.",
     "High string at the top. Numbers are frets. Every note is included.",
@@ -13874,6 +13925,450 @@ function ArpeggioNeck({
     )
   ] });
 }
+const NOTE_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+const NOTE_CHOICES = [
+  "C",
+  "C# / Db",
+  "D",
+  "D# / Eb",
+  "E",
+  "F",
+  "F# / Gb",
+  "G",
+  "G# / Ab",
+  "A",
+  "A# / Bb",
+  "B"
+];
+const letters = ["C", "D", "E", "F", "G", "A", "B"];
+const naturals = [0, 2, 4, 5, 7, 9, 11];
+function pitchClass$2(note) {
+  return (Math.trunc(Number(note) || 0) % 12 + 12) % 12;
+}
+function spellFromRoot(rootName, soundingPitch, letterSteps) {
+  const letter = (letters.indexOf(rootName[0]) + letterSteps) % 7;
+  let alteration = pitchClass$2(soundingPitch - naturals[letter]);
+  if (alteration > 6) alteration -= 12;
+  return letters[letter] + (alteration < 0 ? "b".repeat(-alteration) : "#".repeat(alteration));
+}
+function noteNameInKey(root, offset) {
+  const degrees = [0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 6];
+  const tonic = pitchClass$2(root), relative = pitchClass$2(offset);
+  return spellFromRoot(NOTE_NAMES[tonic], tonic + relative, degrees[relative]);
+}
+const pathwayData = /* @__PURE__ */ JSON.parse('[{"id":"classical","label":"Classical & Spanish","bandGenre":"Acoustic folk","closestGroove":true,"bandNote":"Closest existing groove: Acoustic folk. This is not a dedicated classical, flamenco, cajón, or palmas accompaniment.","suggestedTuning":"standard","defaultScale":"harmonic-minor","tagline":"Independent voices, shaped phrases, and a clear picking hand.","theoryTitle":"Hear the leading tone in the cadence","theory":"The Andalusian descent is i–bVII–bVI–V. The final major V borrows the raised seventh from harmonic minor: hear that note pull back to the tonic. Keep the bass line smooth while upper notes sustain.","scales":["harmonic-minor","phrygian","aeolian"],"chords":[{"shape":"minor","offset":0},{"shape":"major","offset":10},{"shape":"major","offset":8},{"shape":"major","offset":7}],"progression":{"label":"Andalusian descent","meter":"4/4 · one chord per bar","steps":[{"degree":"i","offset":0,"suffix":"m"},{"degree":"bVII","offset":10,"suffix":""},{"degree":"bVI","offset":8,"suffix":""},{"degree":"V","offset":7,"suffix":""}]},"technique":{"title":"P–I–M–A independence","steps":["P is thumb; I, M, and A are index, middle, and ring. Put P on a chord bass and I–M–A on the G–B–e strings.","Play P–I–M–A as four even eighth notes, then P–A–M–I. Let the chord ring and keep the thumb quieter than the melody.","For a tremolo introduction, repeat P–A–M–I on one treble note. Start with a relaxed hand; speed comes after evenness."],"goal":"Repeat each pattern four times at a comfortable tempo without a louder final finger."},"rhythm":{"title":"Rasgueado preparation","count":"1 & 2 & 3 & 4 &","instruction":"On muted strings, release a relaxed ring–middle–index fan outward, then return with a light index upstroke. Keep the motion small. Practice the movement before adding the cadence."}},{"id":"math-rock","label":"Math Rock & Tapping","bandGenre":"Alternative / indie","closestGroove":true,"bandNote":"Closest existing groove: Alternative / indie. It does not supply a dedicated odd-meter math-rock pattern; count the 7/8 exercise on your own.","suggestedTuning":"facgce","defaultScale":"lydian","tagline":"Wide intervals, ringing extensions, and deliberate tapping.","theoryTitle":"A major sound with a raised fourth","theory":"Lydian adds #4 to a major scale. Contrast that note with the ordinary fourth, then resolve it to the fifth. Major sevenths and ninths spread a chord across the neck; an inversion can put the third below the root.","scales":["lydian","ionian","major-pentatonic"],"chords":[{"shape":"major7Inversion","offset":0},{"shape":"major9Inversion","offset":0},{"shape":"add9","offset":0}],"progression":{"label":"Lydian color study","meter":"7/8 · group 2 + 2 + 3","steps":[{"degree":"Imaj7","offset":0,"suffix":"maj7"},{"degree":"II","offset":2,"suffix":""},{"degree":"Iadd9","offset":0,"suffix":"add9"},{"degree":"II","offset":2,"suffix":""}]},"technique":{"title":"Two-hand tapping, one string first","steps":["In standard tuning, hold fret 5 on the G string, hammer fret 7 with the fretting hand, then tap fret 12 with the picking hand.","Pull the tapping finger off gently to fret 7, then pull off to fret 5. Mute unused strings with both hands.","Those notes are C–D–G, a fixed C-based exercise. On a different tuning, use the pitch display to find C–D–G again before repeating."],"goal":"Loop 5h7–T12–p7–p5 with equal volume. These reference frets do not transpose with the selected key."},"rhythm":{"title":"Seven eighths, not seven quarter notes","count":"ONE two · ONE two · ONE two three","instruction":"Tap the group starts while counting seven equal eighth notes. Keep the final three-note group the same subdivision. Then sustain a chord for each complete bar."}},{"id":"djent","label":"Djent & Prog","bandGenre":"Metalcore","closestGroove":true,"bandNote":"Closest existing groove: Metalcore. No dedicated djent, polymeter, or extended-range groove is added by this lesson.","suggestedTuning":"drop-d","defaultScale":"phrygian","tagline":"Precise subdivisions, controlled low strings, and complete silence.","theoryTitle":"Keep the pulse while accents move","theory":"A 3+3+3+3+4 accent pattern fills one bar of sixteen sixteenth notes in 4/4. The groups change the accents, not the bar length. Phrygian contributes a tense b2; use it as a deliberate approach into the root.","scales":["phrygian","aeolian","chromatic"],"chords":[{"shape":"power","offset":0},{"shape":"power","offset":1},{"shape":"minor","offset":0}],"progression":{"label":"Root / semitone contrast","meter":"4/4 · keep counting all rests","steps":[{"degree":"i5","offset":0,"suffix":"5"},{"degree":"bII5","offset":1,"suffix":"5"},{"degree":"i5","offset":0,"suffix":"5"},{"degree":"bVI5","offset":8,"suffix":"5"}]},"technique":{"title":"Dead-stop palm muting","steps":["Rest the picking-hand edge close to the bridge. Pick one low-string note, then stop it with both hands.","Alternate a short note and an equally measured rest. Release fretting pressure without lifting away from the string.","Add a second note only when every rest is quiet. A gate can assist, but the hands must create the stop."],"goal":"Play four bars of short notes and rests without letting a muted string ring into the next group."},"rhythm":{"title":"Sixteen-step accent grid","count":">.. >.. >.. >.. >...","instruction":"Each character is one sixteenth note; > is an accent and . is a quiet note or rest. Count 1 e & a 2 e & a 3 e & a 4 e & a underneath. This exercise stays in 4/4."}},{"id":"hip-hop","label":"Hip-Hop / Trap","bandGenre":"R&B / soul","closestGroove":true,"bandNote":"Closest existing groove: R&B / soul. It is not a dedicated trap groove and does not promise 808 bass or trap hi-hat rolls.","suggestedTuning":"standard","defaultScale":"aeolian","tagline":"Compact minor loops with space for the vocal and bass.","theoryTitle":"Add color without filling every beat","theory":"A minor ninth includes 1–b3–5–b7–9; the shell here leaves out the fifth. Move between minor and relative-major colors, then make a melody from only two or three notes. Leave the lowest register to the bass.","scales":["aeolian","minor-pentatonic","dorian"],"chords":[{"shape":"minor9","offset":0},{"shape":"major7","offset":8},{"shape":"major7","offset":3}],"progression":{"label":"Four-bar minor loop","meter":"4/4 · one chord per bar","steps":[{"degree":"i9","offset":0,"suffix":"m9"},{"degree":"bVImaj7","offset":8,"suffix":"maj7"},{"degree":"bIIImaj7","offset":3,"suffix":"maj7"},{"degree":"bVII","offset":10,"suffix":""}]},"technique":{"title":"Top-line loop and release","steps":["Arpeggiate a chord on beats 1 and 2, then stop the bass strings while the highest note rings.","Repeat the same rhythm on the next chord. Change only one top note when possible.","Leave beat 4 empty on the final bar so the loop has room to breathe. Record a clean repetition before adding ambience."],"goal":"Play the loop twice with the same note lengths and a clear empty beat before restarting."},"rhythm":{"title":"A sparse sixteenth pocket","count":"1 e & a 2 e & a 3 e & a 4 e & a","instruction":"Place a short chord on 1, the & of 2, and 3. Leave beat 4 open. Count all subdivisions while letting the rests stay silent."}},{"id":"pop","label":"Modern Pop","bandGenre":"Pop","suggestedTuning":"standard","defaultScale":"ionian","tagline":"Reliable changes, steady rhythm, and a melody worth repeating.","theoryTitle":"The same four functions in any major key","theory":"I–V–vi–IV uses three major chords and one minor chord. Numbers describe their jobs in the key, so the sequence survives a key change. Find the common notes between chords before adding a busier strum.","scales":["ionian","major-pentatonic","aeolian"],"chords":[{"shape":"major","offset":0},{"shape":"major","offset":7},{"shape":"minor","offset":9},{"shape":"major","offset":5}],"progression":{"label":"Four-chord song form","meter":"4/4 · one chord per bar","steps":[{"degree":"I","offset":0,"suffix":""},{"degree":"V","offset":7,"suffix":""},{"degree":"vi","offset":9,"suffix":"m"},{"degree":"IV","offset":5,"suffix":""}]},"technique":{"title":"Change before adding speed","steps":["Play the first chord for four quarter notes. Prepare the next shape while the last note is ringing.","Keep the strumming hand moving down–up in eighth notes, even where the pick misses the strings.","Accent beats 2 and 4, then reduce the strum to two or three strings for the quieter section."],"goal":"Repeat all four changes twice without delaying the first beat of a bar."},"rhythm":{"title":"Continuous hand, chosen attacks","count":"D · D U · U D U","instruction":"Read each slot as an eighth note. D is a downstroke, U an upstroke, and · a silent pass. Start slowly and keep the hand moving through the silent slots."}},{"id":"blues","label":"Blues & Roots","bandGenre":"Blues shuffle","suggestedTuning":"standard","defaultScale":"blues","tagline":"Five connected boxes, a swung pulse, and phrases that answer.","theoryTitle":"Minor and major color over dominant chords","theory":"Minor pentatonic is 1–b3–4–5–b7; the blues scale adds b5. Major pentatonic replaces the minor color with 2–3–6. Over a dominant I chord, compare b3 with 3 and resolve bends by ear instead of holding both as if they were interchangeable.","scales":["minor-pentatonic","blues","major-pentatonic","mixolydian"],"chords":[{"shape":"dominant7","offset":0},{"shape":"dominant7","offset":5},{"shape":"dominant7","offset":7}],"progression":{"label":"Twelve-bar blues","meter":"12 bars · 4/4 shuffle · one chord per bar","steps":[{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"IV7","offset":5,"suffix":"7"},{"degree":"IV7","offset":5,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"V7","offset":7,"suffix":"7"},{"degree":"IV7","offset":5,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"V7","offset":7,"suffix":"7"}]},"technique":{"title":"Bend, check, then answer","steps":["Pick a scale note and find its whole-step target two frets higher on the same string.","Play the target first, return to the lower note, then bend toward the remembered pitch. Use supporting fingers.","Make a two-beat call, leave two beats of space, and answer with a shorter phrase on a chord tone."],"goal":"Use one accurate bend and one deliberate rest in each four-bar phrase."},"rhythm":{"title":"Long–short shuffle","count":"ONE (trip) let · TWO (trip) let","instruction":"Divide each beat into three even parts. Play the first and third parts, leaving the middle silent. Keep all three parts even internally rather than guessing a dotted rhythm."}},{"id":"funk","label":"Funk & R&B","bandGenre":"Funk","suggestedTuning":"standard","defaultScale":"dorian","tagline":"Small voicings, short notes, and a hand that never loses time.","theoryTitle":"The chord color lives above the bass","theory":"Minor sevenths and dominant ninth shells leave room for the bass player. Dorian supplies a natural 6 over a minor groove. A dominant 7#9 combines the major third with a raised ninth, enharmonically the minor third; hear the tension rather than treating it as a plain minor chord.","scales":["dorian","minor-pentatonic","mixolydian"],"chords":[{"shape":"minor7","offset":0},{"shape":"dominant9","offset":5},{"shape":"dominant7sharp9","offset":0}],"progression":{"label":"Minor pocket into IV9","meter":"4/4 · two bars per chord","steps":[{"degree":"i7","offset":0,"suffix":"m7"},{"degree":"IV9","offset":5,"suffix":"9"}]},"technique":{"title":"The sixteenth-note chank","steps":["Rest the fretting hand across the strings without pressing. Strum four muted sixteenths on one beat.","Keep that down–up motion and press the chord only on the &. Release pressure immediately after the attack.","Limit the pick to the middle and upper strings. Alternate one bar of scratches with one bar containing two short chord accents."],"goal":"Make the pitched chank as short as the muted scratches while the hand stays relaxed."},"rhythm":{"title":"One accent inside the grid","count":"1 e & a · 2 e & a · 3 e & a · 4 e & a","instruction":"Count every slot. Sound the chord on the & of 1 and the a of 3; use light scratches elsewhere. Begin with just one chord before changing harmony."}},{"id":"jazz","label":"Jazz & Neo-Soul","bandGenre":"Jazz swing","suggestedTuning":"standard","defaultScale":"dorian","tagline":"Guide tones, close movement, and extended harmony.","theoryTitle":"Follow the thirds and sevenths","theory":"In a major ii–V–I, the ii chord is minor seventh, V is dominant seventh, and I is major seventh. Ninths add color without changing that function. Hear the seventh of ii move down to the third of V, then the seventh of V move down to the third of I.","scales":["dorian","mixolydian","ionian","locrian"],"chords":[{"shape":"minor9","offset":2},{"shape":"dominant9","offset":7},{"shape":"major7","offset":0},{"shape":"major9Inversion","offset":0}],"progression":{"label":"Major ii–V–I turnaround","meter":"4/4 · one chord per bar","steps":[{"degree":"ii9","offset":2,"suffix":"m9"},{"degree":"V9","offset":7,"suffix":"9"},{"degree":"Imaj7","offset":0,"suffix":"maj7"},{"degree":"vi7","offset":9,"suffix":"m7"}]},"technique":{"title":"Guide-tone voice leading","steps":["First play only the third and seventh of each ii–V–I chord. Move each voice by the smallest available distance.","Add the chord root, then the ninth. The shell voicings omit the fifth so the inner voices remain clear.","For a drop-2 exercise, spell a close-position seventh chord top to bottom, then move its second-highest note down an octave. Re-find the notes rather than applying that name to every four-note grip."],"goal":"Sing one moving inner voice while playing the progression; keep its notes audible inside the chord."},"rhythm":{"title":"Comp with room between chords","count":"1 · 2 & · 3 · 4 &","instruction":"Play a short chord on beat 1 and the & of 2, then leave beat 3 clear. Add the & of 4 only as a pickup into the next bar. Listen to the bass and avoid filling every gap."}},{"id":"indie","label":"Indie / Shoegaze","bandGenre":"Alternative / indie","suggestedTuning":"dadgad","defaultScale":"lydian","tagline":"Ringing drones, suspended thirds, and deliberate layers.","theoryTitle":"Separate suspension from added color","theory":"Sus2 and sus4 replace the third; add9 retains the third and adds the second an octave higher in the chord spelling. A ringing open string becomes a different interval when the chord beneath it changes. Check that relationship before letting it drone through every chord.","scales":["lydian","ionian","major-pentatonic"],"chords":[{"shape":"add9","offset":0},{"shape":"sus2","offset":0},{"shape":"sus4","offset":0},{"shape":"major7","offset":5}],"progression":{"label":"Suspended landscape","meter":"4/4 · one chord per bar","steps":[{"degree":"Iadd9","offset":0,"suffix":"add9"},{"degree":"IVmaj7","offset":5,"suffix":"maj7"},{"degree":"vi7","offset":9,"suffix":"m7"},{"degree":"Vsus4","offset":7,"suffix":"sus4"}]},"technique":{"title":"Build one sustained layer","steps":["In standard tuning, alternate the root add9 and sus2 shapes, letting the top strings ring.","Pick a different string on each beat instead of strumming the full chord. Mute the lowest string when it is marked ×.","For DADGAD, select the tuning and use the fretboard to rebuild the pitches. These standard-tuning grips must not be copied unchanged."],"goal":"Record a clear four-bar arpeggio before adding a second layer or increasing the reverb."},"rhythm":{"title":"A pulse inside the wash","count":"1 & 2 & 3 & 4 &","instruction":"Accent 1 and 3 lightly while the arpeggio continues in eighth notes. Let sustain connect the notes, but stop both hands together at the end of bar four."}},{"id":"country","label":"Country","bandGenre":"Country","suggestedTuning":"standard","defaultScale":"major-pentatonic","tagline":"Alternating bass, bright double stops, and clean hybrid attacks.","theoryTitle":"Numbers, thirds, and sixths","theory":"The Nashville-style 1–4–5–6m pattern uses major I, IV, V and minor vi. Major pentatonic gives a clear melodic starting point. Pair scale notes a third or a sixth apart, changing the interval size as the major scale requires.","scales":["major-pentatonic","ionian","mixolydian"],"chords":[{"shape":"major","offset":0},{"shape":"major","offset":5},{"shape":"dominant7","offset":7},{"shape":"minor","offset":9}],"progression":{"label":"1–4–5–6m numbers","meter":"4/4 · one chord per bar","steps":[{"degree":"1","offset":0,"suffix":""},{"degree":"4","offset":5,"suffix":""},{"degree":"5","offset":7,"suffix":""},{"degree":"6m","offset":9,"suffix":"m"}]},"technique":{"title":"Hybrid picking and double stops","steps":["Hold the pick normally and use the middle finger for a higher string. Alternate a picked bass note and a finger-plucked treble note.","In standard tuning, try G-string fret 4 with B-string fret 3, then G5 with B5. These are B–D and C–E: a minor third, then a major third.","Keep those fixed reference frets distinct from the selected key. Use the scale display to build diatonic thirds in a new key."],"goal":"Keep bass and treble equally even for eight bars without pulling the treble string sharply upward."},"rhythm":{"title":"Root–fifth train pulse","count":"ROOT & chord & FIFTH & chord &","instruction":"In 4/4, place root on beat 1, a light chord on 2, fifth on 3, and chord on 4. Keep the eighth-note motion small and let the backbeats stay crisp."}},{"id":"classic-rock","label":"Classic Rock","bandGenre":"Rock","suggestedTuning":"standard","defaultScale":"minor-pentatonic","tagline":"Open-chord weight, connected CAGED forms, and dynamic control.","theoryTitle":"Find one chord in five places","theory":"CAGED names five major-chord forms, not five different keys. Each form can spell the same major chord at a different neck position. Power chords omit the third, so they leave major or minor color to the surrounding melody and harmony.","scales":["minor-pentatonic","major-pentatonic","mixolydian"],"chords":[{"shape":"major","offset":0},{"shape":"power","offset":10},{"shape":"major","offset":5}],"progression":{"label":"Mixolydian rock movement","meter":"4/4 · one chord per bar","steps":[{"degree":"I","offset":0,"suffix":""},{"degree":"bVII","offset":10,"suffix":""},{"degree":"IV","offset":5,"suffix":""},{"degree":"I","offset":0,"suffix":""}]},"technique":{"title":"Riff into chord","steps":["Play a two-note pentatonic pickup, then land on a full chord at the next beat 1.","Repeat with lighter picking and a lower guitar-volume setting. Listen for the chord becoming clearer without changing the rhythm.","Move a small fragment of the chord into the next CAGED area. Follow root notes instead of memorizing only the outside shape."],"goal":"Play one four-bar phrase softly, then strongly, with the same pulse and clean chord endings."},"rhythm":{"title":"Eighth-note drive","count":"1 & 2 & 3 & 4 &","instruction":"Begin with eight even downstrokes. Accent 2 and 4 without speeding up, then leave the & of 4 silent before the next chord."}},{"id":"metal","label":"Heavy Metal","bandGenre":"Thrash","suggestedTuning":"seven-standard","defaultScale":"harmonic-minor","tagline":"Tight gallops, controlled strings, and dark melodic tension.","theoryTitle":"Choose the source of the tension","theory":"Natural minor has b6 and b7. Harmonic minor raises the seventh, producing a strong leading tone and a three-semitone gap between b6 and 7. Phrygian instead adds b2 to natural minor. Learn those colors separately before combining them in a riff.","scales":["harmonic-minor","phrygian","aeolian","minor-pentatonic"],"chords":[{"shape":"power","offset":0},{"shape":"power","offset":8},{"shape":"power","offset":7},{"shape":"minor","offset":0}],"progression":{"label":"Minor-key power movement","meter":"4/4 · one chord per bar","steps":[{"degree":"i5","offset":0,"suffix":"5"},{"degree":"bVI5","offset":8,"suffix":"5"},{"degree":"bVII5","offset":10,"suffix":"5"},{"degree":"V5","offset":7,"suffix":"5"}]},"technique":{"title":"Palm-muted gallop","steps":["On one low note, play one eighth note followed by two sixteenth notes. Count 1 & a within the beat: long–short–short.","Use down–down–up or an alternate-picking approach that remains relaxed. Leave a full beat of silence after three gallops.","Move the pattern between power chords while touching unused strings with both hands. Add tempo only when the final sixteenth lands evenly."],"goal":"Play four bars with identical gallop spacing and no extra string noise between chord changes."},"rhythm":{"title":"Long–short–short subdivision","count":"1 (e) & a · 2 (e) & a · 3 (e) & a · REST","instruction":"The parenthesized e continues the first eighth note; it is not another attack. Sound 1, &, a on each beat, then leave beat 4 silent. Keep the sixteenth-note grid even."}}]');
+const rhythmGenres = [
+  "Rock",
+  "Metalcore",
+  "Thrash",
+  "Blues shuffle",
+  "Funk",
+  "Clean ballad",
+  "Pop",
+  "Country",
+  "Jazz swing",
+  "Acoustic folk",
+  "Reggae",
+  "R&B / soul",
+  "Punk",
+  "Alternative / indie",
+  "Latin / bossa",
+  "Hard rock"
+];
+const LEARN_NOTE_NAMES = [
+  "C",
+  "C#",
+  "D",
+  "Eb",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "Ab",
+  "A",
+  "Bb",
+  "B"
+];
+const STANDARD_OPEN_PITCHES = [4, 9, 2, 7, 11, 4];
+const STRING_NAMES = ["E", "A", "D", "G", "B", "e"];
+const pitchClass$1 = (value) => (Number(value) % 12 + 12) % 12;
+const noteName = (value) => LEARN_NOTE_NAMES[pitchClass$1(value)];
+const SCALE_REFERENCE = [
+  { id: "melodic-minor", name: "Melodic minor / ascending", formula: "1 · 2 · b3 · 4 · 5 · 6 · 7", intervals: [0, 2, 3, 5, 7, 9, 11] },
+  {
+    id: "minor-pentatonic",
+    name: "Minor pentatonic",
+    formula: "1 · b3 · 4 · 5 · b7",
+    intervals: [0, 3, 5, 7, 10]
+  },
+  {
+    id: "major-pentatonic",
+    name: "Major pentatonic",
+    formula: "1 · 2 · 3 · 5 · 6",
+    intervals: [0, 2, 4, 7, 9]
+  },
+  {
+    id: "blues",
+    name: "Minor blues",
+    formula: "1 · b3 · 4 · b5 · 5 · b7",
+    intervals: [0, 3, 5, 6, 7, 10]
+  },
+  {
+    id: "harmonic-minor",
+    name: "Harmonic minor",
+    formula: "1 · 2 · b3 · 4 · 5 · b6 · 7",
+    intervals: [0, 2, 3, 5, 7, 8, 11]
+  },
+  {
+    id: "ionian",
+    name: "Ionian / major",
+    formula: "1 · 2 · 3 · 4 · 5 · 6 · 7",
+    intervals: [0, 2, 4, 5, 7, 9, 11]
+  },
+  {
+    id: "dorian",
+    name: "Dorian",
+    formula: "1 · 2 · b3 · 4 · 5 · 6 · b7",
+    intervals: [0, 2, 3, 5, 7, 9, 10]
+  },
+  {
+    id: "phrygian",
+    name: "Phrygian",
+    formula: "1 · b2 · b3 · 4 · 5 · b6 · b7",
+    intervals: [0, 1, 3, 5, 7, 8, 10]
+  },
+  {
+    id: "lydian",
+    name: "Lydian",
+    formula: "1 · 2 · 3 · #4 · 5 · 6 · 7",
+    intervals: [0, 2, 4, 6, 7, 9, 11]
+  },
+  {
+    id: "mixolydian",
+    name: "Mixolydian",
+    formula: "1 · 2 · 3 · 4 · 5 · 6 · b7",
+    intervals: [0, 2, 4, 5, 7, 9, 10]
+  },
+  {
+    id: "aeolian",
+    name: "Aeolian / natural minor",
+    formula: "1 · 2 · b3 · 4 · 5 · b6 · b7",
+    intervals: [0, 2, 3, 5, 7, 8, 10]
+  },
+  {
+    id: "locrian",
+    name: "Locrian",
+    formula: "1 · b2 · b3 · 4 · b5 · b6 · b7",
+    intervals: [0, 1, 3, 5, 6, 8, 10]
+  },
+  {
+    id: "chromatic",
+    name: "Chromatic",
+    formula: "All 12 semitones",
+    intervals: Array.from({ length: 12 }, (_, i) => i)
+  }
+];
+function getScaleNoteNames(scaleId, root = 4) {
+  const scale = SCALE_REFERENCE.find((item) => item.id === scaleId);
+  if (!scale) return [];
+  if (scaleId === "chromatic")
+    return scale.intervals.map(
+      (interval) => noteName(pitchClass$1(root) + interval)
+    );
+  const degrees = scale.formula.split("·").map((degree) => (Number(degree.replace(/[^0-9]/g, "")) - 1) % 7);
+  return scale.intervals.map(
+    (interval, index) => spellFromRoot(noteName(root), pitchClass$1(root) + interval, degrees[index])
+  );
+}
+const CHORD_SHAPES = {
+  major: {
+    label: "E form major",
+    suffix: "",
+    intervals: [0, 4, 7],
+    baseRoot: 4,
+    frets: [0, 2, 2, 1, 0, 0]
+  },
+  minor: {
+    label: "E form minor",
+    suffix: "m",
+    intervals: [0, 3, 7],
+    baseRoot: 4,
+    frets: [0, 2, 2, 0, 0, 0]
+  },
+  power: {
+    label: "Root / fifth / octave",
+    suffix: "5",
+    intervals: [0, 7],
+    baseRoot: 4,
+    frets: [0, 2, 2, null, null, null]
+  },
+  dominant7: {
+    label: "E form dominant 7",
+    suffix: "7",
+    intervals: [0, 4, 7, 10],
+    baseRoot: 4,
+    frets: [0, 2, 0, 1, 0, 0]
+  },
+  major7: {
+    label: "A form major 7",
+    suffix: "maj7",
+    intervals: [0, 4, 7, 11],
+    baseRoot: 9,
+    frets: [null, 0, 2, 1, 2, 0]
+  },
+  minor7: {
+    label: "A form minor 7",
+    suffix: "m7",
+    intervals: [0, 3, 7, 10],
+    baseRoot: 9,
+    frets: [null, 0, 2, 0, 1, 0]
+  },
+  minor9: {
+    label: "Minor 9 shell · fifth omitted",
+    suffix: "m9",
+    intervals: [0, 3, 7, 10, 2],
+    baseRoot: 2,
+    frets: [null, 5, 3, 5, 5, null]
+  },
+  dominant9: {
+    label: "Dominant 9 shell · fifth omitted",
+    suffix: "9",
+    intervals: [0, 4, 7, 10, 2],
+    baseRoot: 2,
+    frets: [null, 5, 4, 5, 5, null]
+  },
+  dominant7sharp9: {
+    label: "Dominant 7#9 · fifth omitted",
+    suffix: "7#9",
+    intervals: [0, 4, 7, 10, 3],
+    baseRoot: 4,
+    frets: [null, 7, 6, 7, 8, null]
+  },
+  sus2: {
+    label: "A form suspended 2",
+    suffix: "sus2",
+    intervals: [0, 2, 7],
+    baseRoot: 9,
+    frets: [null, 0, 2, 2, 0, 0]
+  },
+  sus4: {
+    label: "A form suspended 4",
+    suffix: "sus4",
+    intervals: [0, 5, 7],
+    baseRoot: 9,
+    frets: [null, 0, 2, 2, 3, 0]
+  },
+  add9: {
+    label: "C form add9",
+    suffix: "add9",
+    intervals: [0, 4, 7, 2],
+    baseRoot: 0,
+    frets: [null, 3, 2, 0, 3, 0]
+  },
+  major7Inversion: {
+    label: "Major 7 · third in the bass",
+    suffix: "maj7",
+    bassInterval: 4,
+    intervals: [0, 4, 7, 11],
+    baseRoot: 0,
+    frets: [null, 7, 5, 5, 5, 7]
+  },
+  major9Inversion: {
+    label: "Major 9 · third in bass, root omitted",
+    suffix: "maj9",
+    bassInterval: 4,
+    intervals: [0, 4, 7, 11, 2],
+    baseRoot: 0,
+    frets: [null, null, 2, 4, 3, 3]
+  },
+  minor11: {
+    label: "Minor 11 · ninth omitted",
+    suffix: "m11",
+    intervals: [0, 3, 7, 10, 2, 5],
+    baseRoot: 9,
+    frets: [null, 0, 0, 0, 1, 0]
+  },
+  cagedC: {
+    label: "C form",
+    suffix: "",
+    intervals: [0, 4, 7],
+    baseRoot: 0,
+    frets: [null, 3, 2, 0, 1, 0]
+  },
+  cagedA: {
+    label: "A form",
+    suffix: "",
+    intervals: [0, 4, 7],
+    baseRoot: 9,
+    frets: [null, 0, 2, 2, 2, 0]
+  },
+  cagedG: {
+    label: "G form",
+    suffix: "",
+    intervals: [0, 4, 7],
+    baseRoot: 7,
+    frets: [3, 2, 0, 0, 0, 3]
+  },
+  cagedE: {
+    label: "E form",
+    suffix: "",
+    intervals: [0, 4, 7],
+    baseRoot: 4,
+    frets: [0, 2, 2, 1, 0, 0]
+  },
+  cagedD: {
+    label: "D form",
+    suffix: "",
+    intervals: [0, 4, 7],
+    baseRoot: 2,
+    frets: [null, null, 0, 2, 3, 2]
+  }
+};
+function getChordVoicing(shapeId, root = 4) {
+  const shape = CHORD_SHAPES[shapeId];
+  if (!shape) return null;
+  const chordRoot = pitchClass$1(root);
+  const shift = pitchClass$1(chordRoot - shape.baseRoot);
+  const frets = shape.frets.map(
+    (fret) => fret === null ? null : fret + shift
+  );
+  const slash = shape.bassInterval === void 0 ? "" : `/${spellFromRoot(noteName(chordRoot), chordRoot + shape.bassInterval, 2)}`;
+  return {
+    ...shape,
+    id: `${shapeId}-${chordRoot}`,
+    shapeId,
+    name: `${noteName(chordRoot)}${shape.suffix}${slash}`,
+    baseRoot: chordRoot,
+    intervals: [...shape.intervals],
+    frets,
+    tuning: "standard"
+  };
+}
+function getChordNoteName(chord, soundingPitch) {
+  var _a, _b;
+  const rootName = ((_b = (_a = chord.name) == null ? void 0 : _a.match(/^[A-G][#b]*/)) == null ? void 0 : _b[0]) ?? noteName(chord.baseRoot);
+  const interval = pitchClass$1(soundingPitch - chord.baseRoot);
+  const degrees = [0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6];
+  const degree = interval === 3 && chord.intervals.includes(4) ? 1 : degrees[interval];
+  return spellFromRoot(rootName, soundingPitch, degree);
+}
+function getChordNoteNames(chord) {
+  var _a;
+  const rootName = ((_a = /^[A-G][#b]*/.exec(chord.name)) == null ? void 0 : _a[0]) ?? noteName(chord.baseRoot);
+  const quality2 = ARPEGGIO_QUALITIES.find((item) => item.suffix === chord.suffix) ?? ARPEGGIO_QUALITIES.find(
+    (item) => item.intervals.length === chord.intervals.length && item.intervals.every(
+      (interval) => chord.intervals.some((tone) => pitchClass$1(tone) === pitchClass$1(interval))
+    )
+  );
+  const tones = quality2 ? spellChordTones(chord.baseRoot, quality2.id, rootName) : [];
+  const names = new Map(tones.map((tone) => [tone.pitch, tone.name]));
+  return chord.frets.map((fret, string) => {
+    if (fret === null) return "×";
+    const pitch = pitchClass$1(STANDARD_OPEN_PITCHES[string] + fret);
+    const interval = pitchClass$1(pitch - chord.baseRoot);
+    return names.get(pitch) ?? (interval === 0 ? rootName : interval === 7 ? spellFromRoot(rootName, pitch, 4) : noteName(pitch));
+  });
+}
+const open = (id, name, root, intervals, frets) => ({
+  id,
+  name,
+  baseRoot: root,
+  intervals,
+  frets,
+  tuning: "standard",
+  label: "Fixed open reference"
+});
+const OPEN_CHORDS = [
+  open("open-c", "C", 0, [0, 4, 7], [null, 3, 2, 0, 1, 0]),
+  open("open-a", "A", 9, [0, 4, 7], [null, 0, 2, 2, 2, 0]),
+  open("open-g", "G", 7, [0, 4, 7], [3, 2, 0, 0, 0, 3]),
+  open("open-e", "E", 4, [0, 4, 7], [0, 2, 2, 1, 0, 0]),
+  open("open-d", "D", 2, [0, 4, 7], [null, null, 0, 2, 3, 2]),
+  open("open-am", "Am", 9, [0, 3, 7], [null, 0, 2, 2, 1, 0]),
+  open("open-em", "Em", 4, [0, 3, 7], [0, 2, 2, 0, 0, 0]),
+  open("open-dm", "Dm", 2, [0, 3, 7], [null, null, 0, 2, 3, 1])
+];
+const pentatonicBoxOffsets = [
+  [
+    [0, 3],
+    [0, 2],
+    [0, 2],
+    [0, 2],
+    [0, 3],
+    [0, 3]
+  ],
+  [
+    [3, 5],
+    [2, 5],
+    [2, 5],
+    [2, 4],
+    [3, 5],
+    [3, 5]
+  ],
+  [
+    [5, 7],
+    [5, 7],
+    [5, 7],
+    [4, 7],
+    [5, 8],
+    [5, 7]
+  ],
+  [
+    [7, 10],
+    [7, 10],
+    [7, 9],
+    [7, 9],
+    [8, 10],
+    [7, 10]
+  ],
+  [
+    [10, 12],
+    [10, 12],
+    [9, 12],
+    [9, 12],
+    [10, 12],
+    [10, 12]
+  ]
+];
+function getPentatonicBoxes(root = 4) {
+  const anchor = pitchClass$1(root - STANDARD_OPEN_PITCHES[0]);
+  return pentatonicBoxOffsets.map((strings, i) => ({
+    id: `minor-pent-box-${i + 1}`,
+    label: `Box ${i + 1}`,
+    frets: strings.map((frets) => frets.map((fret) => fret + anchor)),
+    baseRoot: pitchClass$1(root),
+    tuning: "standard"
+  }));
+}
+const pathwayDefinitions = pathwayData;
+const PATHWAYS = pathwayDefinitions.map((pathway) => ({
+  ...pathway,
+  bandGenreId: rhythmGenres.indexOf(pathway.bandGenre),
+  closestGroove: Boolean(pathway.closestGroove),
+  bandGenreClosest: Boolean(pathway.closestGroove),
+  bandNote: pathway.bandNote || `Existing Band groove: ${pathway.bandGenre}.`
+}));
+function buildProgression(pathwayOrId, root = 4) {
+  const pathway = typeof pathwayOrId === "string" ? PATHWAYS.find((item) => item.id === pathwayOrId) : pathwayOrId;
+  if (!(pathway == null ? void 0 : pathway.progression)) return [];
+  return pathway.progression.steps.map((item) => ({
+    ...item,
+    root: pitchClass$1(pitchClass$1(root) + item.offset),
+    name: `${noteNameInKey(root, item.offset)}${item.suffix}`
+  }));
+}
+function getPathwayChords(pathwayOrId, root = 4) {
+  const pathway = typeof pathwayOrId === "string" ? PATHWAYS.find((item) => item.id === pathwayOrId) : pathwayOrId;
+  return ((pathway == null ? void 0 : pathway.chords) || []).map((item) => {
+    const voicing = getChordVoicing(
+      item.shape,
+      pitchClass$1(pitchClass$1(root) + item.offset)
+    );
+    const rootName = noteNameInKey(root, item.offset);
+    const slash = voicing.bassInterval === void 0 ? "" : `/${spellFromRoot(rootName, voicing.baseRoot + voicing.bassInterval, 2)}`;
+    return { ...voicing, name: `${rootName}${voicing.suffix}${slash}` };
+  });
+}
 const routines = [
   [
     "01",
@@ -13912,9 +14407,18 @@ const routines = [
     "Learn the arpeggio first, then connect two chord tones with one nearby scale note. Resolve that passing note deliberately. Practise short phrases with a held note and a rest instead of continuous runs."
   ]
 ];
-function ArpeggioFoundations({ root, onAddChord, onHear, stop, disabled }) {
+function ArpeggioFoundations({
+  root,
+  onAddChord,
+  onHear,
+  stop,
+  disabled,
+  referenceScale,
+  onReferenceScaleChange
+}) {
   const formId = reactExports.useId();
-  const [scale, setScale] = reactExports.useState("major"), [sevenths, setSevenths] = reactExports.useState(true);
+  const [fallbackScale, setScale] = reactExports.useState("major"), [sevenths, setSevenths] = reactExports.useState(true);
+  const scale = HARMONY_SCALES.some((item) => item.id === referenceScale) ? referenceScale : fallbackScale;
   const [question, setQuestion] = reactExports.useState(null), [answer, setAnswer] = reactExports.useState(null), [direction, setDirection] = reactExports.useState("up");
   const nextQuestion = () => {
     stop();
@@ -13970,7 +14474,10 @@ function ArpeggioFoundations({ root, onAddChord, onHear, stop, disabled }) {
             {
               id: `${formId}-field-1`,
               value: scale,
-              onChange: (event) => setScale(event.target.value),
+              onChange: (event) => {
+                setScale(event.target.value);
+                onReferenceScaleChange == null ? void 0 : onReferenceScaleChange(event.target.value);
+              },
               children: HARMONY_SCALES.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: item.id, children: item.name }, item.id))
             }
           )
@@ -13990,6 +14497,17 @@ function ArpeggioFoundations({ root, onAddChord, onHear, stop, disabled }) {
             }
           )
         ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "arp-note", children: [
+        NOTE_NAMES$1[root],
+        " ",
+        HARMONY_SCALES.find((item) => item.id === scale).name,
+        ":",
+        " ",
+        getScaleNoteNames({ major: "ionian", minor: "aeolian" }[scale] ?? scale, root).join(
+          " · "
+        ),
+        ". This builds chord suggestions; your existing chord qualities stay as written."
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "arp-harmony", children: harmonizeArpeggios(scale, sevenths).map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "button",
@@ -14382,7 +14900,10 @@ function ArpeggioBuilder({
     }
   }, [root, draft.runRange, focusStudy]);
   const [previewVolume, setPreviewVolume] = useRetainedState("learn-arpeggios", "volume", 75);
-  const modelKey = JSON.stringify([draft, root, tuning2]);
+  const modelKey = JSON.stringify(
+    [draft, root, tuning2],
+    (key, value) => key === "referenceScale" ? void 0 : value
+  );
   const preview = useArpeggioPreview(modelKey, {
     volume: previewVolume,
     nativeStatus: status.learnPreview
@@ -14411,9 +14932,17 @@ function ArpeggioBuilder({
     chordRoot,
     selected.quality,
     getArpeggioRoot(root, next),
-    next.quality
+    next.quality,
+    root
   );
-  const chordTones = spellChordTones(chordRoot, selected.quality);
+  const chordTones = spellChordTones(
+    chordRoot,
+    selected.quality,
+    noteNameInKey$1(root, selected.offset)
+  );
+  const scaleReport = arpeggioScaleReport(draft, root);
+  const scaleChord = scaleReport == null ? void 0 : scaleReport.chords[selectedIndex];
+  const outsideNames = scaleChord == null ? void 0 : scaleChord.outside.map((tone) => tone.name).join(", ");
   const atLimit = draft.steps.length >= MAX_ARPEGGIO_STEPS;
   const saveName = draft.name.trim() || "My progression";
   const fileName = saveName.replace(/[^a-z0-9_-]+/gi, "-").slice(0, 70);
@@ -14431,6 +14960,10 @@ function ArpeggioBuilder({
     preview.stop();
     setDraft((current) => ({ ...current, ...changes }));
     setFeedback("Draft changed. Save it to keep it after closing Cassian.");
+  };
+  const updateReferenceScale = (referenceScale) => {
+    setDraft((current) => ({ ...current, referenceScale }));
+    setFeedback("Scale reference updated. Your chord pitches and playback are unchanged.");
   };
   const updateStep = (changes) => {
     update({
@@ -14823,6 +15356,21 @@ function ArpeggioBuilder({
               /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Shape the next chord." })
             ] }) }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "arp-chord-editor", role: "group", "aria-label": "Selected chord settings", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "arp-scale-reference", htmlFor: `${formId}-reference-scale`, children: [
+                "Scale reference",
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "select",
+                  {
+                    id: `${formId}-reference-scale`,
+                    value: draft.referenceScale ?? "none",
+                    onChange: (event) => updateReferenceScale(event.target.value),
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "none", children: "No scale check" }),
+                      HARMONY_SCALES.map((scale) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: scale.id, children: scale.name }, scale.id))
+                    ]
+                  }
+                )
+              ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: `${formId}-study-key`, children: [
                 "Progression key",
                 /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -14845,7 +15393,7 @@ function ArpeggioBuilder({
                   {
                     id: `${formId}-field-5`,
                     value: chordRoot,
-                    onChange: (event) => updateStep({ offset: pitchClass$2(Number(event.target.value) - root) }),
+                    onChange: (event) => updateStep({ offset: pitchClass$3(Number(event.target.value) - root) }),
                     children: LEARN_KEYS$1.map((key) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: key.value, children: key.name }, key.value))
                   }
                 )
@@ -14903,6 +15451,13 @@ function ArpeggioBuilder({
                   }
                 )
               ] })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "arp-note", "aria-label": "Scale reference check", children: [
+              scaleReport ? `${NOTE_NAMES$1[root]} ${scaleReport.scale.name}: ` : "Tonic alone does not select major or minor. ",
+              scaleChord ? scaleChord.outside.length ? `${scaleChord.name} uses ${outsideNames} outside this scale. ` : `${scaleChord.name} fits this scale. ` : "Choose a scale reference to check your chord tones. ",
+              (scaleChord == null ? void 0 : scaleChord.minorDominant) && "This raised seventh is the conventional minor-key dominant. ",
+              scaleReport && `${scaleReport.outsideCount} of ${draft.steps.length} chords use outside tones. `,
+              "Chord choices are preserved; outside tones can be intentional."
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "arp-harmony-details", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: "Chord tones & connections" }),
@@ -15463,6 +16018,8 @@ function ArpeggioBuilder({
       ArpeggioFoundations,
       {
         root,
+        referenceScale: draft.referenceScale,
+        onReferenceScaleChange: updateReferenceScale,
         disabled: atLimit,
         onAddChord: addChord,
         onHear: (events, options) => playReference(events, options, "ear"),
@@ -15471,445 +16028,7 @@ function ArpeggioBuilder({
     )
   ] });
 }
-const pathwayData = /* @__PURE__ */ JSON.parse('[{"id":"classical","label":"Classical & Spanish","bandGenre":"Acoustic folk","closestGroove":true,"bandNote":"Closest existing groove: Acoustic folk. This is not a dedicated classical, flamenco, cajón, or palmas accompaniment.","suggestedTuning":"standard","defaultScale":"harmonic-minor","tagline":"Independent voices, shaped phrases, and a clear picking hand.","theoryTitle":"Hear the leading tone in the cadence","theory":"The Andalusian descent is i–bVII–bVI–V. The final major V borrows the raised seventh from harmonic minor: hear that note pull back to the tonic. Keep the bass line smooth while upper notes sustain.","scales":["harmonic-minor","phrygian","aeolian"],"chords":[{"shape":"minor","offset":0},{"shape":"major","offset":10},{"shape":"major","offset":8},{"shape":"major","offset":7}],"progression":{"label":"Andalusian descent","meter":"4/4 · one chord per bar","steps":[{"degree":"i","offset":0,"suffix":"m"},{"degree":"bVII","offset":10,"suffix":""},{"degree":"bVI","offset":8,"suffix":""},{"degree":"V","offset":7,"suffix":""}]},"technique":{"title":"P–I–M–A independence","steps":["P is thumb; I, M, and A are index, middle, and ring. Put P on a chord bass and I–M–A on the G–B–e strings.","Play P–I–M–A as four even eighth notes, then P–A–M–I. Let the chord ring and keep the thumb quieter than the melody.","For a tremolo introduction, repeat P–A–M–I on one treble note. Start with a relaxed hand; speed comes after evenness."],"goal":"Repeat each pattern four times at a comfortable tempo without a louder final finger."},"rhythm":{"title":"Rasgueado preparation","count":"1 & 2 & 3 & 4 &","instruction":"On muted strings, release a relaxed ring–middle–index fan outward, then return with a light index upstroke. Keep the motion small. Practice the movement before adding the cadence."}},{"id":"math-rock","label":"Math Rock & Tapping","bandGenre":"Alternative / indie","closestGroove":true,"bandNote":"Closest existing groove: Alternative / indie. It does not supply a dedicated odd-meter math-rock pattern; count the 7/8 exercise on your own.","suggestedTuning":"facgce","defaultScale":"lydian","tagline":"Wide intervals, ringing extensions, and deliberate tapping.","theoryTitle":"A major sound with a raised fourth","theory":"Lydian adds #4 to a major scale. Contrast that note with the ordinary fourth, then resolve it to the fifth. Major sevenths and ninths spread a chord across the neck; an inversion can put the third below the root.","scales":["lydian","ionian","major-pentatonic"],"chords":[{"shape":"major7Inversion","offset":0},{"shape":"major9Inversion","offset":0},{"shape":"add9","offset":0}],"progression":{"label":"Lydian color study","meter":"7/8 · group 2 + 2 + 3","steps":[{"degree":"Imaj7","offset":0,"suffix":"maj7"},{"degree":"II","offset":2,"suffix":""},{"degree":"Iadd9","offset":0,"suffix":"add9"},{"degree":"II","offset":2,"suffix":""}]},"technique":{"title":"Two-hand tapping, one string first","steps":["In standard tuning, hold fret 5 on the G string, hammer fret 7 with the fretting hand, then tap fret 12 with the picking hand.","Pull the tapping finger off gently to fret 7, then pull off to fret 5. Mute unused strings with both hands.","Those notes are C–D–G, a fixed C-based exercise. On a different tuning, use the pitch display to find C–D–G again before repeating."],"goal":"Loop 5h7–T12–p7–p5 with equal volume. These reference frets do not transpose with the selected key."},"rhythm":{"title":"Seven eighths, not seven quarter notes","count":"ONE two · ONE two · ONE two three","instruction":"Tap the group starts while counting seven equal eighth notes. Keep the final three-note group the same subdivision. Then sustain a chord for each complete bar."}},{"id":"djent","label":"Djent & Prog","bandGenre":"Metalcore","closestGroove":true,"bandNote":"Closest existing groove: Metalcore. No dedicated djent, polymeter, or extended-range groove is added by this lesson.","suggestedTuning":"drop-d","defaultScale":"phrygian","tagline":"Precise subdivisions, controlled low strings, and complete silence.","theoryTitle":"Keep the pulse while accents move","theory":"A 3+3+3+3+4 accent pattern fills one bar of sixteen sixteenth notes in 4/4. The groups change the accents, not the bar length. Phrygian contributes a tense b2; use it as a deliberate approach into the root.","scales":["phrygian","aeolian","chromatic"],"chords":[{"shape":"power","offset":0},{"shape":"power","offset":1},{"shape":"minor","offset":0}],"progression":{"label":"Root / semitone contrast","meter":"4/4 · keep counting all rests","steps":[{"degree":"i5","offset":0,"suffix":"5"},{"degree":"bII5","offset":1,"suffix":"5"},{"degree":"i5","offset":0,"suffix":"5"},{"degree":"bVI5","offset":8,"suffix":"5"}]},"technique":{"title":"Dead-stop palm muting","steps":["Rest the picking-hand edge close to the bridge. Pick one low-string note, then stop it with both hands.","Alternate a short note and an equally measured rest. Release fretting pressure without lifting away from the string.","Add a second note only when every rest is quiet. A gate can assist, but the hands must create the stop."],"goal":"Play four bars of short notes and rests without letting a muted string ring into the next group."},"rhythm":{"title":"Sixteen-step accent grid","count":">.. >.. >.. >.. >...","instruction":"Each character is one sixteenth note; > is an accent and . is a quiet note or rest. Count 1 e & a 2 e & a 3 e & a 4 e & a underneath. This exercise stays in 4/4."}},{"id":"hip-hop","label":"Hip-Hop / Trap","bandGenre":"R&B / soul","closestGroove":true,"bandNote":"Closest existing groove: R&B / soul. It is not a dedicated trap groove and does not promise 808 bass or trap hi-hat rolls.","suggestedTuning":"standard","defaultScale":"aeolian","tagline":"Compact minor loops with space for the vocal and bass.","theoryTitle":"Add color without filling every beat","theory":"A minor ninth includes 1–b3–5–b7–9; the shell here leaves out the fifth. Move between minor and relative-major colors, then make a melody from only two or three notes. Leave the lowest register to the bass.","scales":["aeolian","minor-pentatonic","dorian"],"chords":[{"shape":"minor9","offset":0},{"shape":"major7","offset":8},{"shape":"major7","offset":3}],"progression":{"label":"Four-bar minor loop","meter":"4/4 · one chord per bar","steps":[{"degree":"i9","offset":0,"suffix":"m9"},{"degree":"bVImaj7","offset":8,"suffix":"maj7"},{"degree":"bIIImaj7","offset":3,"suffix":"maj7"},{"degree":"bVII","offset":10,"suffix":""}]},"technique":{"title":"Top-line loop and release","steps":["Arpeggiate a chord on beats 1 and 2, then stop the bass strings while the highest note rings.","Repeat the same rhythm on the next chord. Change only one top note when possible.","Leave beat 4 empty on the final bar so the loop has room to breathe. Record a clean repetition before adding ambience."],"goal":"Play the loop twice with the same note lengths and a clear empty beat before restarting."},"rhythm":{"title":"A sparse sixteenth pocket","count":"1 e & a 2 e & a 3 e & a 4 e & a","instruction":"Place a short chord on 1, the & of 2, and 3. Leave beat 4 open. Count all subdivisions while letting the rests stay silent."}},{"id":"pop","label":"Modern Pop","bandGenre":"Pop","suggestedTuning":"standard","defaultScale":"ionian","tagline":"Reliable changes, steady rhythm, and a melody worth repeating.","theoryTitle":"The same four functions in any major key","theory":"I–V–vi–IV uses three major chords and one minor chord. Numbers describe their jobs in the key, so the sequence survives a key change. Find the common notes between chords before adding a busier strum.","scales":["ionian","major-pentatonic","aeolian"],"chords":[{"shape":"major","offset":0},{"shape":"major","offset":7},{"shape":"minor","offset":9},{"shape":"major","offset":5}],"progression":{"label":"Four-chord song form","meter":"4/4 · one chord per bar","steps":[{"degree":"I","offset":0,"suffix":""},{"degree":"V","offset":7,"suffix":""},{"degree":"vi","offset":9,"suffix":"m"},{"degree":"IV","offset":5,"suffix":""}]},"technique":{"title":"Change before adding speed","steps":["Play the first chord for four quarter notes. Prepare the next shape while the last note is ringing.","Keep the strumming hand moving down–up in eighth notes, even where the pick misses the strings.","Accent beats 2 and 4, then reduce the strum to two or three strings for the quieter section."],"goal":"Repeat all four changes twice without delaying the first beat of a bar."},"rhythm":{"title":"Continuous hand, chosen attacks","count":"D · D U · U D U","instruction":"Read each slot as an eighth note. D is a downstroke, U an upstroke, and · a silent pass. Start slowly and keep the hand moving through the silent slots."}},{"id":"blues","label":"Blues & Roots","bandGenre":"Blues shuffle","suggestedTuning":"standard","defaultScale":"blues","tagline":"Five connected boxes, a swung pulse, and phrases that answer.","theoryTitle":"Minor and major color over dominant chords","theory":"Minor pentatonic is 1–b3–4–5–b7; the blues scale adds b5. Major pentatonic replaces the minor color with 2–3–6. Over a dominant I chord, compare b3 with 3 and resolve bends by ear instead of holding both as if they were interchangeable.","scales":["minor-pentatonic","blues","major-pentatonic","mixolydian"],"chords":[{"shape":"dominant7","offset":0},{"shape":"dominant7","offset":5},{"shape":"dominant7","offset":7}],"progression":{"label":"Twelve-bar blues","meter":"12 bars · 4/4 shuffle · one chord per bar","steps":[{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"IV7","offset":5,"suffix":"7"},{"degree":"IV7","offset":5,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"V7","offset":7,"suffix":"7"},{"degree":"IV7","offset":5,"suffix":"7"},{"degree":"I7","offset":0,"suffix":"7"},{"degree":"V7","offset":7,"suffix":"7"}]},"technique":{"title":"Bend, check, then answer","steps":["Pick a scale note and find its whole-step target two frets higher on the same string.","Play the target first, return to the lower note, then bend toward the remembered pitch. Use supporting fingers.","Make a two-beat call, leave two beats of space, and answer with a shorter phrase on a chord tone."],"goal":"Use one accurate bend and one deliberate rest in each four-bar phrase."},"rhythm":{"title":"Long–short shuffle","count":"ONE (trip) let · TWO (trip) let","instruction":"Divide each beat into three even parts. Play the first and third parts, leaving the middle silent. Keep all three parts even internally rather than guessing a dotted rhythm."}},{"id":"funk","label":"Funk & R&B","bandGenre":"Funk","suggestedTuning":"standard","defaultScale":"dorian","tagline":"Small voicings, short notes, and a hand that never loses time.","theoryTitle":"The chord color lives above the bass","theory":"Minor sevenths and dominant ninth shells leave room for the bass player. Dorian supplies a natural 6 over a minor groove. A dominant 7#9 combines the major third with a raised ninth, enharmonically the minor third; hear the tension rather than treating it as a plain minor chord.","scales":["dorian","minor-pentatonic","mixolydian"],"chords":[{"shape":"minor7","offset":0},{"shape":"dominant9","offset":5},{"shape":"dominant7sharp9","offset":0}],"progression":{"label":"Minor pocket into IV9","meter":"4/4 · two bars per chord","steps":[{"degree":"i7","offset":0,"suffix":"m7"},{"degree":"IV9","offset":5,"suffix":"9"}]},"technique":{"title":"The sixteenth-note chank","steps":["Rest the fretting hand across the strings without pressing. Strum four muted sixteenths on one beat.","Keep that down–up motion and press the chord only on the &. Release pressure immediately after the attack.","Limit the pick to the middle and upper strings. Alternate one bar of scratches with one bar containing two short chord accents."],"goal":"Make the pitched chank as short as the muted scratches while the hand stays relaxed."},"rhythm":{"title":"One accent inside the grid","count":"1 e & a · 2 e & a · 3 e & a · 4 e & a","instruction":"Count every slot. Sound the chord on the & of 1 and the a of 3; use light scratches elsewhere. Begin with just one chord before changing harmony."}},{"id":"jazz","label":"Jazz & Neo-Soul","bandGenre":"Jazz swing","suggestedTuning":"standard","defaultScale":"dorian","tagline":"Guide tones, close movement, and extended harmony.","theoryTitle":"Follow the thirds and sevenths","theory":"In a major ii–V–I, the ii chord is minor seventh, V is dominant seventh, and I is major seventh. Ninths add color without changing that function. Hear the seventh of ii move down to the third of V, then the seventh of V move down to the third of I.","scales":["dorian","mixolydian","ionian","locrian"],"chords":[{"shape":"minor9","offset":2},{"shape":"dominant9","offset":7},{"shape":"major7","offset":0},{"shape":"major9Inversion","offset":0}],"progression":{"label":"Major ii–V–I turnaround","meter":"4/4 · one chord per bar","steps":[{"degree":"ii9","offset":2,"suffix":"m9"},{"degree":"V9","offset":7,"suffix":"9"},{"degree":"Imaj7","offset":0,"suffix":"maj7"},{"degree":"vi7","offset":9,"suffix":"m7"}]},"technique":{"title":"Guide-tone voice leading","steps":["First play only the third and seventh of each ii–V–I chord. Move each voice by the smallest available distance.","Add the chord root, then the ninth. The shell voicings omit the fifth so the inner voices remain clear.","For a drop-2 exercise, spell a close-position seventh chord top to bottom, then move its second-highest note down an octave. Re-find the notes rather than applying that name to every four-note grip."],"goal":"Sing one moving inner voice while playing the progression; keep its notes audible inside the chord."},"rhythm":{"title":"Comp with room between chords","count":"1 · 2 & · 3 · 4 &","instruction":"Play a short chord on beat 1 and the & of 2, then leave beat 3 clear. Add the & of 4 only as a pickup into the next bar. Listen to the bass and avoid filling every gap."}},{"id":"indie","label":"Indie / Shoegaze","bandGenre":"Alternative / indie","suggestedTuning":"dadgad","defaultScale":"lydian","tagline":"Ringing drones, suspended thirds, and deliberate layers.","theoryTitle":"Separate suspension from added color","theory":"Sus2 and sus4 replace the third; add9 retains the third and adds the second an octave higher in the chord spelling. A ringing open string becomes a different interval when the chord beneath it changes. Check that relationship before letting it drone through every chord.","scales":["lydian","ionian","major-pentatonic"],"chords":[{"shape":"add9","offset":0},{"shape":"sus2","offset":0},{"shape":"sus4","offset":0},{"shape":"major7","offset":5}],"progression":{"label":"Suspended landscape","meter":"4/4 · one chord per bar","steps":[{"degree":"Iadd9","offset":0,"suffix":"add9"},{"degree":"IVmaj7","offset":5,"suffix":"maj7"},{"degree":"vi7","offset":9,"suffix":"m7"},{"degree":"Vsus4","offset":7,"suffix":"sus4"}]},"technique":{"title":"Build one sustained layer","steps":["In standard tuning, alternate the root add9 and sus2 shapes, letting the top strings ring.","Pick a different string on each beat instead of strumming the full chord. Mute the lowest string when it is marked ×.","For DADGAD, select the tuning and use the fretboard to rebuild the pitches. These standard-tuning grips must not be copied unchanged."],"goal":"Record a clear four-bar arpeggio before adding a second layer or increasing the reverb."},"rhythm":{"title":"A pulse inside the wash","count":"1 & 2 & 3 & 4 &","instruction":"Accent 1 and 3 lightly while the arpeggio continues in eighth notes. Let sustain connect the notes, but stop both hands together at the end of bar four."}},{"id":"country","label":"Country","bandGenre":"Country","suggestedTuning":"standard","defaultScale":"major-pentatonic","tagline":"Alternating bass, bright double stops, and clean hybrid attacks.","theoryTitle":"Numbers, thirds, and sixths","theory":"The Nashville-style 1–4–5–6m pattern uses major I, IV, V and minor vi. Major pentatonic gives a clear melodic starting point. Pair scale notes a third or a sixth apart, changing the interval size as the major scale requires.","scales":["major-pentatonic","ionian","mixolydian"],"chords":[{"shape":"major","offset":0},{"shape":"major","offset":5},{"shape":"dominant7","offset":7},{"shape":"minor","offset":9}],"progression":{"label":"1–4–5–6m numbers","meter":"4/4 · one chord per bar","steps":[{"degree":"1","offset":0,"suffix":""},{"degree":"4","offset":5,"suffix":""},{"degree":"5","offset":7,"suffix":""},{"degree":"6m","offset":9,"suffix":"m"}]},"technique":{"title":"Hybrid picking and double stops","steps":["Hold the pick normally and use the middle finger for a higher string. Alternate a picked bass note and a finger-plucked treble note.","In standard tuning, try G-string fret 4 with B-string fret 3, then G5 with B5. These are B–D and C–E: a minor third, then a major third.","Keep those fixed reference frets distinct from the selected key. Use the scale display to build diatonic thirds in a new key."],"goal":"Keep bass and treble equally even for eight bars without pulling the treble string sharply upward."},"rhythm":{"title":"Root–fifth train pulse","count":"ROOT & chord & FIFTH & chord &","instruction":"In 4/4, place root on beat 1, a light chord on 2, fifth on 3, and chord on 4. Keep the eighth-note motion small and let the backbeats stay crisp."}},{"id":"classic-rock","label":"Classic Rock","bandGenre":"Rock","suggestedTuning":"standard","defaultScale":"minor-pentatonic","tagline":"Open-chord weight, connected CAGED forms, and dynamic control.","theoryTitle":"Find one chord in five places","theory":"CAGED names five major-chord forms, not five different keys. Each form can spell the same major chord at a different neck position. Power chords omit the third, so they leave major or minor color to the surrounding melody and harmony.","scales":["minor-pentatonic","major-pentatonic","mixolydian"],"chords":[{"shape":"major","offset":0},{"shape":"power","offset":10},{"shape":"major","offset":5}],"progression":{"label":"Mixolydian rock movement","meter":"4/4 · one chord per bar","steps":[{"degree":"I","offset":0,"suffix":""},{"degree":"bVII","offset":10,"suffix":""},{"degree":"IV","offset":5,"suffix":""},{"degree":"I","offset":0,"suffix":""}]},"technique":{"title":"Riff into chord","steps":["Play a two-note pentatonic pickup, then land on a full chord at the next beat 1.","Repeat with lighter picking and a lower guitar-volume setting. Listen for the chord becoming clearer without changing the rhythm.","Move a small fragment of the chord into the next CAGED area. Follow root notes instead of memorizing only the outside shape."],"goal":"Play one four-bar phrase softly, then strongly, with the same pulse and clean chord endings."},"rhythm":{"title":"Eighth-note drive","count":"1 & 2 & 3 & 4 &","instruction":"Begin with eight even downstrokes. Accent 2 and 4 without speeding up, then leave the & of 4 silent before the next chord."}},{"id":"metal","label":"Heavy Metal","bandGenre":"Thrash","suggestedTuning":"seven-standard","defaultScale":"harmonic-minor","tagline":"Tight gallops, controlled strings, and dark melodic tension.","theoryTitle":"Choose the source of the tension","theory":"Natural minor has b6 and b7. Harmonic minor raises the seventh, producing a strong leading tone and a three-semitone gap between b6 and 7. Phrygian instead adds b2 to natural minor. Learn those colors separately before combining them in a riff.","scales":["harmonic-minor","phrygian","aeolian","minor-pentatonic"],"chords":[{"shape":"power","offset":0},{"shape":"power","offset":8},{"shape":"power","offset":7},{"shape":"minor","offset":0}],"progression":{"label":"Minor-key power movement","meter":"4/4 · one chord per bar","steps":[{"degree":"i5","offset":0,"suffix":"5"},{"degree":"bVI5","offset":8,"suffix":"5"},{"degree":"bVII5","offset":10,"suffix":"5"},{"degree":"V5","offset":7,"suffix":"5"}]},"technique":{"title":"Palm-muted gallop","steps":["On one low note, play one eighth note followed by two sixteenth notes. Count 1 & a within the beat: long–short–short.","Use down–down–up or an alternate-picking approach that remains relaxed. Leave a full beat of silence after three gallops.","Move the pattern between power chords while touching unused strings with both hands. Add tempo only when the final sixteenth lands evenly."],"goal":"Play four bars with identical gallop spacing and no extra string noise between chord changes."},"rhythm":{"title":"Long–short–short subdivision","count":"1 (e) & a · 2 (e) & a · 3 (e) & a · REST","instruction":"The parenthesized e continues the first eighth note; it is not another attack. Sound 1, &, a on each beat, then leave beat 4 silent. Keep the sixteenth-note grid even."}}]');
-const rhythmGenres = [
-  "Rock",
-  "Metalcore",
-  "Thrash",
-  "Blues shuffle",
-  "Funk",
-  "Clean ballad",
-  "Pop",
-  "Country",
-  "Jazz swing",
-  "Acoustic folk",
-  "Reggae",
-  "R&B / soul",
-  "Punk",
-  "Alternative / indie",
-  "Latin / bossa",
-  "Hard rock"
-];
-const LEARN_NOTE_NAMES = [
-  "C",
-  "C#",
-  "D",
-  "Eb",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "Ab",
-  "A",
-  "Bb",
-  "B"
-];
-const STANDARD_OPEN_PITCHES = [4, 9, 2, 7, 11, 4];
-const STRING_NAMES = ["E", "A", "D", "G", "B", "e"];
-const pitchClass$1 = (value) => (Number(value) % 12 + 12) % 12;
-const noteName = (value) => LEARN_NOTE_NAMES[pitchClass$1(value)];
-const naturalLetters = ["C", "D", "E", "F", "G", "A", "B"];
-const naturalPitches = [0, 2, 4, 5, 7, 9, 11];
-function spellFromRoot(rootName, soundingPitch, letterSteps) {
-  const letterIndex = (naturalLetters.indexOf(rootName[0]) + letterSteps) % 7;
-  const difference = pitchClass$1(soundingPitch - naturalPitches[letterIndex]);
-  const accidental = difference > 6 ? difference - 12 : difference;
-  return naturalLetters[letterIndex] + (accidental > 0 ? "#".repeat(accidental) : "b".repeat(-accidental));
-}
-function noteNameInKey(root, offset) {
-  const steps = {
-    0: 0,
-    1: 1,
-    2: 1,
-    3: 2,
-    4: 2,
-    5: 3,
-    6: 3,
-    7: 4,
-    8: 5,
-    9: 5,
-    10: 6,
-    11: 6
-  };
-  return spellFromRoot(
-    noteName(root),
-    pitchClass$1(root) + offset,
-    steps[pitchClass$1(offset)]
-  );
-}
-const SCALE_REFERENCE = [
-  {
-    id: "minor-pentatonic",
-    name: "Minor pentatonic",
-    formula: "1 · b3 · 4 · 5 · b7",
-    intervals: [0, 3, 5, 7, 10]
-  },
-  {
-    id: "major-pentatonic",
-    name: "Major pentatonic",
-    formula: "1 · 2 · 3 · 5 · 6",
-    intervals: [0, 2, 4, 7, 9]
-  },
-  {
-    id: "blues",
-    name: "Minor blues",
-    formula: "1 · b3 · 4 · b5 · 5 · b7",
-    intervals: [0, 3, 5, 6, 7, 10]
-  },
-  {
-    id: "harmonic-minor",
-    name: "Harmonic minor",
-    formula: "1 · 2 · b3 · 4 · 5 · b6 · 7",
-    intervals: [0, 2, 3, 5, 7, 8, 11]
-  },
-  {
-    id: "ionian",
-    name: "Ionian / major",
-    formula: "1 · 2 · 3 · 4 · 5 · 6 · 7",
-    intervals: [0, 2, 4, 5, 7, 9, 11]
-  },
-  {
-    id: "dorian",
-    name: "Dorian",
-    formula: "1 · 2 · b3 · 4 · 5 · 6 · b7",
-    intervals: [0, 2, 3, 5, 7, 9, 10]
-  },
-  {
-    id: "phrygian",
-    name: "Phrygian",
-    formula: "1 · b2 · b3 · 4 · 5 · b6 · b7",
-    intervals: [0, 1, 3, 5, 7, 8, 10]
-  },
-  {
-    id: "lydian",
-    name: "Lydian",
-    formula: "1 · 2 · 3 · #4 · 5 · 6 · 7",
-    intervals: [0, 2, 4, 6, 7, 9, 11]
-  },
-  {
-    id: "mixolydian",
-    name: "Mixolydian",
-    formula: "1 · 2 · 3 · 4 · 5 · 6 · b7",
-    intervals: [0, 2, 4, 5, 7, 9, 10]
-  },
-  {
-    id: "aeolian",
-    name: "Aeolian / natural minor",
-    formula: "1 · 2 · b3 · 4 · 5 · b6 · b7",
-    intervals: [0, 2, 3, 5, 7, 8, 10]
-  },
-  {
-    id: "locrian",
-    name: "Locrian",
-    formula: "1 · b2 · b3 · 4 · b5 · b6 · b7",
-    intervals: [0, 1, 3, 5, 6, 8, 10]
-  },
-  {
-    id: "chromatic",
-    name: "Chromatic",
-    formula: "All 12 semitones",
-    intervals: Array.from({ length: 12 }, (_, i) => i)
-  }
-];
-function getScaleNoteNames(scaleId, root = 4) {
-  const scale = SCALE_REFERENCE.find((item) => item.id === scaleId);
-  if (!scale) return [];
-  if (scaleId === "chromatic")
-    return scale.intervals.map(
-      (interval) => noteName(pitchClass$1(root) + interval)
-    );
-  const degrees = scale.formula.split("·").map((degree) => (Number(degree.replace(/[^0-9]/g, "")) - 1) % 7);
-  return scale.intervals.map(
-    (interval, index) => spellFromRoot(noteName(root), pitchClass$1(root) + interval, degrees[index])
-  );
-}
-const CHORD_SHAPES = {
-  major: {
-    label: "E form major",
-    suffix: "",
-    intervals: [0, 4, 7],
-    baseRoot: 4,
-    frets: [0, 2, 2, 1, 0, 0]
-  },
-  minor: {
-    label: "E form minor",
-    suffix: "m",
-    intervals: [0, 3, 7],
-    baseRoot: 4,
-    frets: [0, 2, 2, 0, 0, 0]
-  },
-  power: {
-    label: "Root / fifth / octave",
-    suffix: "5",
-    intervals: [0, 7],
-    baseRoot: 4,
-    frets: [0, 2, 2, null, null, null]
-  },
-  dominant7: {
-    label: "E form dominant 7",
-    suffix: "7",
-    intervals: [0, 4, 7, 10],
-    baseRoot: 4,
-    frets: [0, 2, 0, 1, 0, 0]
-  },
-  major7: {
-    label: "A form major 7",
-    suffix: "maj7",
-    intervals: [0, 4, 7, 11],
-    baseRoot: 9,
-    frets: [null, 0, 2, 1, 2, 0]
-  },
-  minor7: {
-    label: "A form minor 7",
-    suffix: "m7",
-    intervals: [0, 3, 7, 10],
-    baseRoot: 9,
-    frets: [null, 0, 2, 0, 1, 0]
-  },
-  minor9: {
-    label: "Minor 9 shell · fifth omitted",
-    suffix: "m9",
-    intervals: [0, 3, 7, 10, 2],
-    baseRoot: 2,
-    frets: [null, 5, 3, 5, 5, null]
-  },
-  dominant9: {
-    label: "Dominant 9 shell · fifth omitted",
-    suffix: "9",
-    intervals: [0, 4, 7, 10, 2],
-    baseRoot: 2,
-    frets: [null, 5, 4, 5, 5, null]
-  },
-  dominant7sharp9: {
-    label: "Dominant 7#9 · fifth omitted",
-    suffix: "7#9",
-    intervals: [0, 4, 7, 10, 3],
-    baseRoot: 4,
-    frets: [null, 7, 6, 7, 8, null]
-  },
-  sus2: {
-    label: "A form suspended 2",
-    suffix: "sus2",
-    intervals: [0, 2, 7],
-    baseRoot: 9,
-    frets: [null, 0, 2, 2, 0, 0]
-  },
-  sus4: {
-    label: "A form suspended 4",
-    suffix: "sus4",
-    intervals: [0, 5, 7],
-    baseRoot: 9,
-    frets: [null, 0, 2, 2, 3, 0]
-  },
-  add9: {
-    label: "C form add9",
-    suffix: "add9",
-    intervals: [0, 4, 7, 2],
-    baseRoot: 0,
-    frets: [null, 3, 2, 0, 3, 0]
-  },
-  major7Inversion: {
-    label: "Major 7 · third in the bass",
-    suffix: "maj7",
-    bassInterval: 4,
-    intervals: [0, 4, 7, 11],
-    baseRoot: 0,
-    frets: [null, 7, 5, 5, 5, 7]
-  },
-  major9Inversion: {
-    label: "Major 9 · third in bass, root omitted",
-    suffix: "maj9",
-    bassInterval: 4,
-    intervals: [0, 4, 7, 11, 2],
-    baseRoot: 0,
-    frets: [null, null, 2, 4, 3, 3]
-  },
-  minor11: {
-    label: "Minor 11 · ninth omitted",
-    suffix: "m11",
-    intervals: [0, 3, 7, 10, 2, 5],
-    baseRoot: 9,
-    frets: [null, 0, 0, 0, 1, 0]
-  },
-  cagedC: {
-    label: "C form",
-    suffix: "",
-    intervals: [0, 4, 7],
-    baseRoot: 0,
-    frets: [null, 3, 2, 0, 1, 0]
-  },
-  cagedA: {
-    label: "A form",
-    suffix: "",
-    intervals: [0, 4, 7],
-    baseRoot: 9,
-    frets: [null, 0, 2, 2, 2, 0]
-  },
-  cagedG: {
-    label: "G form",
-    suffix: "",
-    intervals: [0, 4, 7],
-    baseRoot: 7,
-    frets: [3, 2, 0, 0, 0, 3]
-  },
-  cagedE: {
-    label: "E form",
-    suffix: "",
-    intervals: [0, 4, 7],
-    baseRoot: 4,
-    frets: [0, 2, 2, 1, 0, 0]
-  },
-  cagedD: {
-    label: "D form",
-    suffix: "",
-    intervals: [0, 4, 7],
-    baseRoot: 2,
-    frets: [null, null, 0, 2, 3, 2]
-  }
-};
-function getChordVoicing(shapeId, root = 4) {
-  const shape = CHORD_SHAPES[shapeId];
-  if (!shape) return null;
-  const chordRoot = pitchClass$1(root);
-  const shift = pitchClass$1(chordRoot - shape.baseRoot);
-  const frets = shape.frets.map(
-    (fret) => fret === null ? null : fret + shift
-  );
-  const slash = shape.bassInterval === void 0 ? "" : `/${spellFromRoot(noteName(chordRoot), chordRoot + shape.bassInterval, 2)}`;
-  return {
-    ...shape,
-    id: `${shapeId}-${chordRoot}`,
-    shapeId,
-    name: `${noteName(chordRoot)}${shape.suffix}${slash}`,
-    baseRoot: chordRoot,
-    intervals: [...shape.intervals],
-    frets,
-    tuning: "standard"
-  };
-}
-function getChordNoteName(chord, soundingPitch) {
-  var _a, _b;
-  const rootName = ((_b = (_a = chord.name) == null ? void 0 : _a.match(/^[A-G][#b]*/)) == null ? void 0 : _b[0]) ?? noteName(chord.baseRoot);
-  const interval = pitchClass$1(soundingPitch - chord.baseRoot);
-  const degrees = [0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6];
-  const degree = interval === 3 && chord.intervals.includes(4) ? 1 : degrees[interval];
-  return spellFromRoot(rootName, soundingPitch, degree);
-}
-const open = (id, name, root, intervals, frets) => ({
-  id,
-  name,
-  baseRoot: root,
-  intervals,
-  frets,
-  tuning: "standard",
-  label: "Fixed open reference"
-});
-const OPEN_CHORDS = [
-  open("open-c", "C", 0, [0, 4, 7], [null, 3, 2, 0, 1, 0]),
-  open("open-a", "A", 9, [0, 4, 7], [null, 0, 2, 2, 2, 0]),
-  open("open-g", "G", 7, [0, 4, 7], [3, 2, 0, 0, 0, 3]),
-  open("open-e", "E", 4, [0, 4, 7], [0, 2, 2, 1, 0, 0]),
-  open("open-d", "D", 2, [0, 4, 7], [null, null, 0, 2, 3, 2]),
-  open("open-am", "Am", 9, [0, 3, 7], [null, 0, 2, 2, 1, 0]),
-  open("open-em", "Em", 4, [0, 3, 7], [0, 2, 2, 0, 0, 0]),
-  open("open-dm", "Dm", 2, [0, 3, 7], [null, null, 0, 2, 3, 1])
-];
-const pentatonicBoxOffsets = [
-  [
-    [0, 3],
-    [0, 2],
-    [0, 2],
-    [0, 2],
-    [0, 3],
-    [0, 3]
-  ],
-  [
-    [3, 5],
-    [2, 5],
-    [2, 5],
-    [2, 4],
-    [3, 5],
-    [3, 5]
-  ],
-  [
-    [5, 7],
-    [5, 7],
-    [5, 7],
-    [4, 7],
-    [5, 8],
-    [5, 7]
-  ],
-  [
-    [7, 10],
-    [7, 10],
-    [7, 9],
-    [7, 9],
-    [8, 10],
-    [7, 10]
-  ],
-  [
-    [10, 12],
-    [10, 12],
-    [9, 12],
-    [9, 12],
-    [10, 12],
-    [10, 12]
-  ]
-];
-function getPentatonicBoxes(root = 4) {
-  const anchor = pitchClass$1(root - STANDARD_OPEN_PITCHES[0]);
-  return pentatonicBoxOffsets.map((strings, i) => ({
-    id: `minor-pent-box-${i + 1}`,
-    label: `Box ${i + 1}`,
-    frets: strings.map((frets) => frets.map((fret) => fret + anchor)),
-    baseRoot: pitchClass$1(root),
-    tuning: "standard"
-  }));
-}
-const pathwayDefinitions = pathwayData;
-const PATHWAYS = pathwayDefinitions.map((pathway) => ({
-  ...pathway,
-  bandGenreId: rhythmGenres.indexOf(pathway.bandGenre),
-  closestGroove: Boolean(pathway.closestGroove),
-  bandGenreClosest: Boolean(pathway.closestGroove),
-  bandNote: pathway.bandNote || `Existing Band groove: ${pathway.bandGenre}.`
-}));
-function buildProgression(pathwayOrId, root = 4) {
-  const pathway = typeof pathwayOrId === "string" ? PATHWAYS.find((item) => item.id === pathwayOrId) : pathwayOrId;
-  if (!(pathway == null ? void 0 : pathway.progression)) return [];
-  return pathway.progression.steps.map((item) => ({
-    ...item,
-    root: pitchClass$1(pitchClass$1(root) + item.offset),
-    name: `${noteNameInKey(root, item.offset)}${item.suffix}`
-  }));
-}
-function getPathwayChords(pathwayOrId, root = 4) {
-  const pathway = typeof pathwayOrId === "string" ? PATHWAYS.find((item) => item.id === pathwayOrId) : pathwayOrId;
-  return ((pathway == null ? void 0 : pathway.chords) || []).map((item) => {
-    const voicing = getChordVoicing(
-      item.shape,
-      pitchClass$1(pitchClass$1(root) + item.offset)
-    );
-    const rootName = noteNameInKey(root, item.offset);
-    const slash = voicing.bassInterval === void 0 ? "" : `/${spellFromRoot(rootName, voicing.baseRoot + voicing.bassInterval, 2)}`;
-    return { ...voicing, name: `${rootName}${voicing.suffix}${slash}` };
-  });
-}
-const NOTE_NAMES = [
-  "C",
-  "C#",
-  "D",
-  "Eb",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "Ab",
-  "A",
-  "Bb",
-  "B"
-];
-const LEARN_KEYS = NOTE_NAMES.map((name, value) => ({ value, name }));
+const LEARN_KEYS = NOTE_CHOICES.map((name, value) => ({ value, name }));
 const tuning = (id, name, notes) => ({
   id,
   name,
@@ -16946,9 +17065,7 @@ function ChordDiagram({ chord, leftHanded = false }) {
   );
 }
 function ChordCard({ chord, onSelect, disabled, leftHanded }) {
-  const notes = chord.frets.map(
-    (fret, i) => fret === null ? "×" : getChordNoteName(chord, STANDARD_OPEN_PITCHES[i] + fret)
-  );
+  const notes = getChordNoteNames(chord);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("article", { className: "learn-chord-card", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "learn-chord-card-heading", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { children: chord.name }),
